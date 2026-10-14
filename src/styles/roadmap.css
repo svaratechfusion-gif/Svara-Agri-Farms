@@ -1,0 +1,386 @@
+/* ----------------------------------------------------------------------------
+   The product roadmap (home): SVARA Moringa Powder, then the packs in
+   preparation as stops along one fine vein.
+
+   Phones: one column, the vein beside the content on the left.
+   48rem+: stops alternate either side of a central vein; each spans two grid
+   rows offset by one, so neighbours interleave instead of stacking as rows.
+
+   Every stop is fully visible by default. Motion is added only with
+   scripting and no reduced-motion preference, and never hides text.
+---------------------------------------------------------------------------- */
+
+.roadmap {
+  --vein-x: 1.25rem; /* the vein's centre, from the route's left edge */
+  --route-inset: 2.75rem; /* where stops begin on phones */
+  margin-top: clamp(3rem, 2rem + 4vw, 6rem);
+}
+
+/* The first stop: the product itself, given room. */
+.roadmap-featured {
+  display: grid;
+  gap: clamp(2rem, 1rem + 3vw, 3.5rem);
+  align-items: center;
+}
+.roadmap-featured__art {
+  position: relative;
+  aspect-ratio: 5 / 4;
+  max-width: 36rem;
+  width: 100%;
+  margin-inline: auto;
+}
+.roadmap-featured__sun {
+  position: absolute;
+  inset: 8% 4% 0;
+  border-radius: 50% 50% 0 0 / 60% 60% 0 0;
+  mask-image: linear-gradient(to bottom, #000 62%, transparent);
+  background: radial-gradient(
+    ellipse 70% 72% at 50% 100%,
+    rgb(232 200 120 / 0.6),
+    rgb(197 161 90 / 0.2) 52%,
+    transparent 74%
+  );
+}
+.roadmap-featured__powder {
+  position: absolute;
+  left: 4%;
+  bottom: 3%;
+  width: 36%;
+}
+.roadmap-featured__pouch {
+  position: absolute;
+  inset-block: 4% 2%;
+  left: 36%;
+  width: 50%;
+}
+.roadmap-featured__shadow {
+  position: absolute;
+  inset-inline: 12%;
+  bottom: 0;
+  height: 5%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(24 32 25 / 0.28), transparent);
+}
+
+@media (min-width: 64rem) {
+  .roadmap-featured {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+  /* Ends short of the page's right edge, where SVARA's launcher sits. */
+  .roadmap-featured__copy {
+    max-width: 28rem;
+  }
+}
+
+/* The route: the vein and every stop after the first. */
+.roadmap-route {
+  position: relative;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  padding-left: var(--route-inset);
+}
+.roadmap-vein {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--vein-x) - 0.75rem);
+  width: 1.5rem;
+  height: 100%;
+  pointer-events: none;
+}
+.roadmap-vein__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.roadmap-vein path {
+  fill: none;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.roadmap-vein__ghost {
+  stroke: var(--vein, rgb(92 120 61 / 0.25));
+  stroke-width: 1;
+}
+.roadmap-vein__line {
+  stroke: var(--color-botanical);
+  stroke-width: 1.5;
+}
+.roadmap-bud {
+  position: absolute;
+  top: 0;
+  left: var(--vein-x);
+  translate: -50% -50%;
+  color: var(--color-botanical);
+  line-height: 0;
+}
+
+.roadmap-intro {
+  max-width: 28rem;
+  margin-top: clamp(4rem, 3rem + 4vw, 7rem);
+}
+
+.roadmap-list {
+  display: grid;
+  gap: 3.5rem;
+}
+
+/* One scene per product: large artwork, its details beside or below it. */
+.milestone {
+  position: relative;
+  display: grid;
+  gap: 1.25rem;
+  justify-items: start;
+}
+.milestone__marker {
+  position: absolute;
+  top: 34%;
+  left: calc(var(--vein-x) - var(--route-inset));
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--color-ivory);
+  color: var(--color-botanical);
+  line-height: 0;
+}
+.milestone__art {
+  position: relative;
+  /* Phones: large and centred, constrained by the screen. */
+  width: min(100%, 18.75rem);
+  justify-self: center;
+}
+/* A soft sun behind the pack: an ellipse that fades out before its box edges. */
+.milestone__arc {
+  position: absolute;
+  inset: 4% -6% -6%;
+  opacity: 0.7;
+}
+.milestone[data-tone="earth"] .milestone__arc {
+  background: radial-gradient(
+    closest-side at 50% 62%,
+    rgb(197 161 90 / 0.42),
+    rgb(197 161 90 / 0.14) 60%,
+    transparent
+  );
+}
+.milestone[data-tone="forest"] .milestone__arc {
+  background: radial-gradient(
+    closest-side at 50% 62%,
+    rgb(92 120 61 / 0.34),
+    rgb(92 120 61 / 0.12) 60%,
+    transparent
+  );
+}
+.milestone__copy {
+  min-width: 0;
+  max-width: 19rem;
+}
+
+/* The scene being read: the marker ripens to gold, its sun warms. */
+.milestone[data-active] .milestone__marker {
+  color: var(--color-harvest);
+}
+.milestone[data-active] .milestone__arc {
+  opacity: 1;
+}
+
+/* The journey counter: desktop only (see below). */
+.roadmap-progress {
+  display: none;
+}
+
+/* Tablet and up: the snake. Artwork and details sit either side of the
+   central vein and swap sides from one scene to the next. */
+@media (min-width: 48rem) {
+  .roadmap {
+    --gutter: clamp(4.5rem, 2rem + 6vw, 8rem);
+  }
+  .roadmap-route {
+    padding-left: 0;
+  }
+  .roadmap-vein {
+    left: calc(50% - 0.75rem);
+  }
+  .roadmap-bud {
+    left: 50%;
+  }
+  .roadmap-intro {
+    margin-inline: auto;
+    text-align: center;
+  }
+  .roadmap-list {
+    gap: 0;
+  }
+  .milestone {
+    grid-template-columns: minmax(0, 1fr) var(--gutter) minmax(0, 1fr);
+    align-items: center;
+    gap: 0;
+    padding-block: 2.5rem;
+  }
+  .milestone__marker {
+    top: 50%;
+    left: 50%;
+  }
+  .milestone__art {
+    width: min(100%, calc(clamp(19.5rem, 40vw, 22.5rem) * var(--scale, 1)));
+  }
+  /* Artwork towards the vein, details on the far side of it. */
+  .milestone[data-side="left"] .milestone__art {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .milestone[data-side="left"] .milestone__copy {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: start;
+  }
+  .milestone[data-side="right"] .milestone__art {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: start;
+  }
+  .milestone[data-side="right"] .milestone__copy {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: end;
+    text-align: right;
+  }
+}
+
+/* Desktop: a scene per screen, the artwork the focal point. */
+@media (min-width: 64rem) {
+  .milestone {
+    min-height: min(80svh, 52rem);
+    padding-block: 3rem;
+  }
+  .milestone__art {
+    width: min(100%, calc(clamp(26.5rem, 36vw, 31.25rem) * var(--scale, 1)));
+  }
+  .milestone__copy {
+    max-width: 20rem;
+  }
+
+  .roadmap-progress {
+    display: block;
+    position: sticky;
+    top: calc(var(--header-height) + 1.25rem);
+    z-index: 2;
+    height: 0;
+  }
+  .roadmap-progress__pill {
+    position: absolute;
+    left: 50%;
+    translate: -50% 0;
+    display: inline-flex;
+    align-items: baseline;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--vein, rgb(92 120 61 / 0.25));
+    border-radius: 999px;
+    background: var(--color-ivory);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    opacity: 0;
+  }
+  .roadmap-progress[data-visible] .roadmap-progress__pill {
+    opacity: 1;
+  }
+}
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .milestone__arc {
+    transition: opacity 0.6s var(--ease-organic);
+  }
+  /* The vein is uncovered down to where the reader has reached. */
+  .roadmap-vein__drawn {
+    clip-path: inset(0 0 calc((1 - var(--progress, 1)) * 100%) 0);
+  }
+  .milestone__marker {
+    transition:
+      color 0.4s var(--ease-organic),
+      scale 0.5s var(--ease-organic);
+  }
+  .milestone[data-active] .milestone__marker {
+    scale: 1.3;
+  }
+  .roadmap-progress__pill {
+    transition: opacity 0.4s var(--ease-organic);
+  }
+
+  /* Arrival, once JS is live: the image rises from soft focus; text only
+     moves a little and never fades, so it is always readable. */
+  .roadmap-featured__art,
+  .roadmap-featured__copy {
+    transition:
+      opacity 0.9s var(--ease-organic),
+      translate 1s var(--ease-organic);
+  }
+  [data-roadmap="live"] .roadmap-featured:not([data-seen]) .roadmap-featured__art {
+    opacity: 0.25;
+    translate: 0 1.75rem;
+  }
+  [data-roadmap="live"] .roadmap-featured:not([data-seen]) .roadmap-featured__copy {
+    translate: 0 0.75rem;
+  }
+
+  /* Phones and tablets: each scene settles in once, as it arrives. */
+  @media (max-width: 63.99rem) {
+    .milestone__art,
+    .milestone__copy {
+      transition:
+        opacity 0.9s var(--ease-organic),
+        translate 1s var(--ease-organic);
+    }
+    [data-roadmap="live"] .milestone:not([data-seen]) .milestone__art {
+      opacity: 0.25;
+      translate: 0 1.75rem;
+    }
+    [data-roadmap="live"] .milestone:not([data-seen]) .milestone__copy {
+      translate: 0 0.75rem;
+    }
+  }
+
+  /* Desktop: focus follows the scene's own pass through the screen
+     (--progress 0 → 1, sharpest at 0.5). The artwork recedes towards its
+     side as the scene leaves and arrives from it as the next one enters;
+     the details drift a little the other way. Text never fades. Without
+     --progress (no script yet) every scene reads as in focus. */
+  @media (min-width: 64rem) {
+    .milestone {
+      --away: calc(max(var(--progress, 0.5) - 0.5, 0.5 - var(--progress, 0.5)) * 2);
+      --toward: -1;
+    }
+    .milestone[data-side="right"] {
+      --toward: 1;
+    }
+    .milestone__art {
+      opacity: calc(1 - var(--away) * 0.75);
+      /* Short, so a receding pack never drifts under SVARA's launcher. */
+      translate: calc(var(--toward) * var(--away) * 1.5rem) 0;
+      scale: calc(1 - var(--away) * 0.08);
+      transition:
+        opacity var(--motion-follow) var(--ease-organic),
+        translate var(--motion-follow) var(--ease-organic),
+        scale var(--motion-follow) var(--ease-organic);
+    }
+    .milestone__copy {
+      translate: calc(var(--toward) * var(--away) * -1.25rem) 0;
+      transition: translate var(--motion-follow) var(--ease-organic);
+    }
+  }
+}
+
+/* Reduced motion: the active scene still changes colour, instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .milestone__marker,
+  .milestone__marker * {
+    transition: none !important;
+  }
+}

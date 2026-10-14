@@ -1,0 +1,601 @@
+/* ----------------------------------------------------------------------------
+   SVARA Botanical Design Language — shared geometry
+   Documentation: src/components/botanical/README.md
+
+   Shape utilities only set the outline (and `--frame-radius`, which a
+   nested .media-frame inherits); add overflow-hidden where content must clip.
+
+   Every organic shape on the site is one curve family taken from the moringa
+   leaflet: two opposite "shoulders" drawn as broad curves, two opposite
+   "tips" kept almost sharp. Scale changes the radius, never the idea.
+
+     leaf-btn      long leaf     (buttons — styles/leaf-buttons.css)
+     leaf-plate    leaf plate    (photographs, feature panels)
+     leaflet       leaflet       (small images, markers)
+     seed          seed form     (metadata tags, labels)
+     botanical-frame             (an offset hairline echoing a plate)
+---------------------------------------------------------------------------- */
+
+:root {
+  --plate-round: clamp(2.25rem, 0.75rem + 4.5vw, 6.5rem);
+  --plate-round-sm: clamp(1.5rem, 0.75rem + 2.5vw, 3.25rem);
+  --plate-tip: 0.375rem;
+  --vein: rgb(23 60 39 / 0.28);
+  --vein-light: rgb(247 243 232 / 0.35);
+}
+
+/* Leaf plate: shoulders top-left and bottom-right, tips top-right and bottom-left. */
+@utility leaf-plate {
+  --frame-radius: var(--plate-round) var(--plate-tip) var(--plate-round) var(--plate-tip);
+  border-radius: var(--frame-radius);
+}
+
+/* The mirrored plate, for compositions that face the other way. */
+@utility leaf-plate-reverse {
+  --frame-radius: var(--plate-tip) var(--plate-round) var(--plate-tip) var(--plate-round);
+  border-radius: var(--frame-radius);
+}
+
+/* A smaller plate for cards, thumbnails and inset images. */
+@utility leaf-plate-sm {
+  --frame-radius: var(--plate-round-sm) 0.25rem var(--plate-round-sm) 0.25rem;
+  border-radius: var(--frame-radius);
+}
+
+/* Leaflet: the full lens, for small inset photographs and markers. */
+@utility leaflet {
+  --frame-radius: 62% 7% 62% 7%;
+  border-radius: var(--frame-radius);
+}
+
+/* Seed: a compact, slightly asymmetric oval for metadata. */
+@utility seed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.45em 0.95em;
+  border-radius: 1.1em 0.35em 1.1em 0.35em / 60% 40% 60% 40%;
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Botanical frame: an offset hairline plate behind its content. */
+@utility botanical-frame {
+  position: relative;
+  isolation: isolate;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    translate: 0.85rem 0.85rem;
+    border: 1px solid rgb(197 161 90 / 0.6);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+}
+
+/* A vertical midrib down the left edge of a list; items hang from it. */
+@utility midrib-list {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0.4rem;
+    bottom: 0.4rem;
+    left: 0.6875rem;
+    width: 1px;
+    background: var(--vein);
+  }
+}
+
+/* Organic reveal: the plate opens like a leaf unfolding from its base. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal="leaf"] {
+    clip-path: inset(0 0 0 0 round 0);
+    transition: clip-path 1.9s var(--ease-cinematic);
+  }
+  [data-reveal="leaf"]:not([data-revealed]) {
+    clip-path: inset(16% 34% 16% 0% round 45% 4% 45% 4%);
+  }
+  [data-reveal="leaf"] img {
+    transition: transform 2.4s var(--ease-organic);
+  }
+  [data-reveal="leaf"]:not([data-revealed]) img {
+    transform: scale(1.1);
+  }
+
+  /* A vein draws itself along its length when revealed. */
+  [data-reveal="vein"] [data-vein-trace] {
+    transition: transform 1.6s var(--ease-cinematic);
+  }
+  [data-reveal="vein"]:not([data-revealed]) [data-vein-trace] {
+    transform: scaleX(0);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Vein progress — stages as leaflets along a central vein.
+   Horizontal by default; `.vein-progress--stack` turns it vertical below md.
+   `--progress` (0–1) traces the vein; a static value comes from `--vp-static`.
+---------------------------------------------------------------------------- */
+
+.vein-progress {
+  --vp-node: 2.75rem;
+  --vp-line: var(--vein);
+  --vp-trace: var(--color-forest);
+  --vp-bg: var(--color-ivory);
+  position: relative;
+}
+.vein-progress__list {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--vp-count), minmax(0, 1fr));
+}
+.vein-progress[data-tone="light"] {
+  --vp-line: var(--vein-light);
+  --vp-trace: var(--color-harvest);
+}
+
+.vein-progress__line,
+.vein-progress__trace {
+  position: absolute;
+  top: calc(var(--vp-node) / 2);
+  left: calc(50% / var(--vp-count));
+  right: calc(50% / var(--vp-count));
+  height: 1px;
+  background: var(--vp-line);
+  pointer-events: none;
+}
+.vein-progress__trace {
+  background: var(--vp-trace);
+  transform-origin: left center;
+  transform: scaleX(var(--progress, var(--vp-static, 0)));
+  transition: transform 0.6s var(--ease-organic);
+}
+
+.vein-progress__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.vein-progress__node {
+  display: grid;
+  place-items: center;
+  width: var(--vp-node);
+  height: var(--vp-node);
+  border-radius: 999px;
+  color: var(--vp-line);
+  background: transparent;
+}
+button.vein-progress__node {
+  cursor: pointer;
+}
+.vein-progress__node > svg {
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: var(--vp-bg);
+  transition:
+    scale 0.6s var(--ease-organic),
+    color 0.6s var(--ease-organic);
+}
+.vein-progress[data-tone="light"] .vein-progress__node > svg {
+  background: transparent;
+}
+.vein-progress__stage[data-state="past"] .vein-progress__node {
+  color: var(--color-botanical);
+}
+.vein-progress[data-tone="light"] .vein-progress__stage[data-state="past"] .vein-progress__node {
+  color: rgb(247 243 232 / 0.8);
+}
+.vein-progress__stage[data-state="current"] .vein-progress__node {
+  color: var(--vp-trace);
+}
+.vein-progress__stage[data-state="current"] .vein-progress__node > svg {
+  scale: 1.45;
+}
+button.vein-progress__node:hover > svg {
+  scale: 1.2;
+}
+.vein-progress__stage[data-state="current"] button.vein-progress__node:hover > svg {
+  scale: 1.45;
+}
+
+.vein-progress__label {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+.vein-progress__label b {
+  display: block;
+  font-weight: 500;
+  color: var(--color-earth-ink);
+}
+.vein-progress__stage[data-state="current"] .vein-progress__label {
+  color: var(--color-forest);
+}
+.vein-progress[data-tone="light"] .vein-progress__label {
+  color: rgb(247 243 232 / 0.7);
+}
+.vein-progress[data-tone="light"] .vein-progress__label b {
+  color: rgb(247 243 232 / 0.55);
+}
+.vein-progress[data-tone="light"]
+  .vein-progress__stage[data-state="current"]
+  .vein-progress__label {
+  color: var(--color-ivory);
+}
+
+@media (max-width: 47.99rem) {
+  .vein-progress--stack .vein-progress__list {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.25rem;
+  }
+  .vein-progress--stack .vein-progress__line,
+  .vein-progress--stack .vein-progress__trace {
+    top: calc(var(--vp-node) / 2);
+    bottom: calc(var(--vp-node) / 2);
+    left: calc(var(--vp-node) / 2);
+    right: auto;
+    width: 1px;
+    height: auto;
+  }
+  .vein-progress--stack .vein-progress__trace {
+    transform-origin: center top;
+    transform: scaleY(var(--progress, var(--vp-static, 0)));
+  }
+  .vein-progress--stack .vein-progress__stage {
+    flex-direction: row;
+    gap: 0.9rem;
+    text-align: left;
+  }
+  .vein-progress--stack .vein-progress__label b {
+    display: inline;
+    margin-right: 0.6em;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Stem — a continuous vein in the page margin (Our Story). It sits half a
+   gutter to the left of the content edge at every width, so branch nodes in
+   section headers (`.branch-node`) always land on it.
+---------------------------------------------------------------------------- */
+
+.stem {
+  position: relative;
+}
+@media (min-width: 48rem) {
+  .stem::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc((100% - min(100%, 85rem + 2 * var(--gutter-page))) / 2 + var(--gutter-page) / 2);
+    width: 1px;
+    background: var(--vein);
+  }
+}
+.branch-node {
+  display: none;
+}
+@media (min-width: 48rem) {
+  .stem .branch-node {
+    display: block;
+    position: absolute;
+    top: -0.55rem;
+    left: calc(var(--gutter-page) / -2);
+    translate: -50% 0;
+    color: var(--color-botanical);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Botanical navigation — every header link is a real leaf (the supplied
+   cutout, same size and aspect for all, never stretched). The label sits on
+   the leaf's body and follows its midrib. Hover lifts and sways the leaf;
+   the current page's leaf stays lifted and lit with a harvest-gold glow.
+---------------------------------------------------------------------------- */
+
+.leaf-nav {
+  /* The cutout's own proportions (1671 × 940). */
+  width: 6.6rem;
+  aspect-ratio: 1671 / 940;
+  color: var(--color-ivory);
+  border-radius: 50%;
+}
+.leaf-nav__leaf {
+  filter: saturate(0.92) brightness(0.94) drop-shadow(0 3px 4px rgb(15 42 27 / 0.18));
+  transform-origin: 92% 92%; /* the stem */
+}
+.leaf-nav__label {
+  /* Centred on the leaf's body (left of the stem), along the midrib. */
+  max-width: 4.9rem;
+  translate: -6% -10%;
+  rotate: 11deg;
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.11em;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgb(10 24 16 / 0.65);
+}
+.leaf-nav:hover .leaf-nav__leaf {
+  filter: saturate(1.05) brightness(1.06) drop-shadow(0 6px 8px rgb(15 42 27 / 0.24));
+}
+.leaf-nav[aria-current="page"] .leaf-nav__leaf {
+  filter: saturate(1.12) brightness(1.1) drop-shadow(0 0 7px rgb(197 161 90 / 0.85))
+    drop-shadow(0 6px 10px rgb(15 42 27 / 0.28));
+}
+.leaf-nav[aria-current="page"] .leaf-nav__label {
+  color: #fff8e4;
+}
+.leaf-nav:focus-visible {
+  outline-offset: 2px;
+}
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .leaf-nav__leaf {
+    transition:
+      transform 0.7s var(--ease-organic),
+      filter 0.5s var(--ease-organic);
+  }
+  .leaf-nav__label {
+    transition: translate 0.7s var(--ease-organic);
+  }
+  /* A sway from the stem, and a small lift. */
+  .leaf-nav:hover .leaf-nav__leaf,
+  .leaf-nav:focus-visible .leaf-nav__leaf {
+    transform: translate3d(0, -3px, 0) rotate(-7deg) scale(1.05);
+  }
+  .leaf-nav:hover .leaf-nav__label,
+  .leaf-nav:focus-visible .leaf-nav__label {
+    translate: -6% calc(-10% - 3px);
+  }
+  .leaf-nav[aria-current="page"] .leaf-nav__leaf {
+    transform: translate3d(0, -2px, 0) rotate(-4deg) scale(1.06);
+  }
+  /* On load each leaf unfurls from its stem, in turn. */
+  .header-enter .leaf-nav__leaf {
+    animation: leaf-unfurl 1.5s var(--ease-organic) backwards;
+    animation-delay: calc(0.55s + var(--i, 0) * 0.09s);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Chapter vein — the homepage index at the right edge (ChapterVein).
+---------------------------------------------------------------------------- */
+
+.chapter-vein {
+  transition:
+    opacity 0.6s var(--ease-organic),
+    visibility 0.6s;
+}
+.chapter-vein[data-hidden] {
+  opacity: 0;
+  visibility: hidden;
+}
+.chapter-vein__trace {
+  transform-origin: top;
+  transform: scaleY(var(--chapter, 0));
+  transition: transform 0.8s var(--ease-organic);
+}
+.chapter-vein__node {
+  color: var(--vein);
+  transition: color 0.4s var(--ease-organic);
+}
+.chapter-vein__node[data-state="past"] {
+  color: var(--color-botanical);
+}
+.chapter-vein__node[data-state="current"] {
+  color: var(--color-forest);
+}
+.chapter-vein__node:hover,
+.chapter-vein__node:focus-visible {
+  color: var(--color-forest);
+}
+.chapter-vein__node > svg {
+  border-radius: 999px;
+  background: var(--color-ivory);
+  padding: 2px;
+}
+.chapter-vein__label {
+  opacity: 0;
+  translate: 0.4rem 0;
+  transition:
+    opacity 0.35s var(--ease-organic),
+    translate 0.35s var(--ease-organic);
+}
+.chapter-vein__node:hover .chapter-vein__label,
+.chapter-vein__node:focus-visible .chapter-vein__label {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* ----------------------------------------------------------------------------
+   Floating leaf (FloatingLeaf) — the settled, static composition. Motion for
+   it lives in styles/motion.css and only adds to this.
+---------------------------------------------------------------------------- */
+
+.floating-leaf__shadow {
+  /* The leaf's own silhouette, darkened and softened: a cast shadow, not a halo. */
+  filter: brightness(0) blur(18px);
+  opacity: 0.2;
+  transform: translate(2.5%, 9%) scale(0.96);
+}
+.floating-leaf__leaf {
+  filter: drop-shadow(0 1px 1px rgb(24 32 25 / 0.18));
+}
+.floating-leaf__foreground {
+  filter: blur(8px);
+  opacity: 0.36;
+}
+
+/* ----------------------------------------------------------------------------
+   Living Journey Line (JourneyVein / VerticalVein). The trace is complete by
+   default — reduced motion sees the finished vein — and follows scroll only
+   in styles/motion.css.
+---------------------------------------------------------------------------- */
+
+.journey-vein__base,
+.journey-vein__trace,
+.journey-vein__branch {
+  fill: none;
+  stroke-linecap: round;
+}
+.journey-vein__base {
+  stroke: rgb(247 243 232 / 0.3);
+  stroke-width: 1.4;
+}
+.journey-vein__trace {
+  stroke: var(--color-harvest);
+  stroke-width: 2.2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.journey-vein__branch {
+  stroke: rgb(247 243 232 / 0.3);
+  stroke-width: 1.1;
+  transition: stroke 0.6s var(--ease-organic);
+}
+.journey-vein__branch.is-reached {
+  stroke: rgb(197 161 90 / 0.85);
+}
+.journey-vein__node {
+  color: rgb(247 243 232 / 0.6);
+  transition: color 0.5s var(--ease-organic);
+}
+.journey-vein__node > svg {
+  transition:
+    width 0.5s var(--ease-organic),
+    height 0.5s var(--ease-organic);
+}
+.journey-vein__stage[data-state="past"] .journey-vein__node {
+  color: rgb(247 243 232 / 0.85);
+}
+.journey-vein__stage[data-state="current"] .journey-vein__node,
+.journey-vein__node:hover,
+.journey-vein__node:focus-visible {
+  color: var(--color-harvest);
+}
+.journey-vein__label {
+  margin-left: 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(247 243 232 / 0.62);
+  transition: color 0.5s var(--ease-organic);
+}
+.journey-vein__label b {
+  font-weight: 500;
+  color: rgb(247 243 232 / 0.45);
+}
+.journey-vein__stage[data-state="current"] .journey-vein__label {
+  color: var(--color-ivory);
+}
+
+/* The vertical pathway sits on ivory. */
+.vertical-vein .journey-vein__base {
+  stroke: var(--vein);
+  stroke-width: 1;
+}
+.vertical-vein .journey-vein__trace {
+  stroke: var(--color-forest);
+  stroke-width: 1.4;
+}
+
+/* The journey line on ivory (reduced-motion overview). */
+.journey-vein--ivory .journey-vein__base,
+.journey-vein--ivory .journey-vein__branch {
+  stroke: var(--vein);
+}
+.journey-vein--ivory .journey-vein__trace {
+  stroke: var(--color-forest);
+}
+.journey-vein--ivory .journey-vein__branch.is-reached {
+  stroke: var(--color-botanical);
+}
+.journey-vein--ivory .journey-vein__node,
+.journey-vein--ivory .journey-vein__stage[data-state="past"] .journey-vein__node {
+  color: var(--color-botanical);
+}
+.journey-vein--ivory .journey-vein__stage[data-state="current"] .journey-vein__node {
+  color: var(--color-forest);
+}
+.journey-vein--ivory .journey-vein__label,
+.journey-vein--ivory .journey-vein__stage[data-state="current"] .journey-vein__label {
+  color: var(--color-ink-soft);
+}
+.journey-vein--ivory .journey-vein__label b {
+  color: var(--color-earth-ink);
+}
+
+/* The generic leaf as an abstract silhouette: its own alpha, filled ivory and
+   kept very faint — depth in the ground, never a subject. */
+.product-stage__silhouette {
+  filter: brightness(0) invert(1);
+  opacity: 0.07;
+}
+
+/* ----------------------------------------------------------------------------
+   The Green — a low harvest sun with fine rays, behind the powder sweep.
+---------------------------------------------------------------------------- */
+.green-sun__rays {
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgb(232 200 120 / 0.2) 0deg 2.2deg,
+    transparent 2.2deg 9deg
+  );
+  mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+}
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .green-sun__rays {
+    transform: rotate(calc(var(--progress, 0.5) * 28deg))
+      scale(calc(0.88 + var(--progress, 0.5) * 0.2));
+    transition: transform var(--motion-follow) var(--ease-organic);
+  }
+}
+
+/* Mobile menu: the same leaf as the desktop navigation, as each item's marker. */
+.menu-leaf-marker {
+  opacity: 0.5;
+  filter: saturate(0.6) brightness(1.15);
+  rotate: -18deg;
+  transition:
+    opacity 0.4s var(--ease-organic),
+    filter 0.4s var(--ease-organic);
+}
+.menu-leaf-marker--active {
+  opacity: 1;
+  filter: saturate(1.1) brightness(1.15) drop-shadow(0 0 6px rgb(197 161 90 / 0.8));
+}
+
+/* The Shade: bands of warm light filtered through the shelter's slatted roof. */
+.shade-room__light {
+  background: repeating-linear-gradient(
+    112deg,
+    transparent 0 7%,
+    rgb(232 200 120 / 0.16) 7% 9.5%,
+    transparent 9.5% 15%,
+    rgb(232 200 120 / 0.09) 15% 16.5%
+  );
+  mix-blend-mode: screen;
+  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 85%);
+}

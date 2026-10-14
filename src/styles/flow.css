@@ -1,0 +1,75 @@
+/* ----------------------------------------------------------------------------
+   Ingredient flow dividers (IngredientFlowDivider)
+
+   A centred ingredient sweep between two sections, about a third of a desktop
+   viewport tall. Height leads: --flow-h is the target height (≈ 160px on
+   phones, 225px tablet, 300px at 1200, 340–375px at 1440+), × --flow-scale.
+   The frame's width follows from the levelled artwork's shape (--flow-ratio),
+   capped at 92vw and 80rem; a capped frame shrinks its height with it, so the
+   art is never stretched.
+
+   The band spans the page (so its background can blend the two neighbours)
+   and breaks out of any centred container; it clips horizontally, so it never
+   scrolls sideways even where a scrollbar makes 100vw wider than the page.
+   The frame starts --flow-above shares of --section-space above the band and
+   ends --flow-below shares below it — a restrained reach into the neighbours'
+   padding — and the band keeps the height that is left.
+---------------------------------------------------------------------------- */
+
+.ingredient-flow {
+  --flow-h: calc(clamp(9.5rem, 6rem + 17vw, 23.5rem) * var(--flow-scale, 1));
+  --flow-w: min(calc(var(--flow-h) / var(--flow-ratio)), 92vw, 80rem);
+  --flow-frame-h: calc(var(--flow-w) * var(--flow-ratio));
+  --flow-reach: calc(var(--section-space) * (var(--flow-above, 0) + var(--flow-below, 0)));
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  height: max(4rem, var(--flow-frame-h) - var(--flow-reach));
+  overflow-x: clip;
+  overflow-y: visible;
+  pointer-events: none;
+  user-select: none;
+  background: linear-gradient(180deg, var(--flow-from, transparent), var(--flow-to, transparent));
+}
+
+/* Centred horizontally on the page, whatever the artwork's own asymmetry
+   (the `level` offsets centre the sweep's measured bounds in the frame). */
+.ingredient-flow__art {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--section-space) * var(--flow-above, 0) * -1);
+  width: var(--flow-w);
+  height: var(--flow-frame-h);
+  margin-left: calc(var(--flow-w) / -2);
+}
+.ingredient-flow[data-mirror] .ingredient-flow__art {
+  scale: -1 1;
+}
+
+.ingredient-flow__drift {
+  position: absolute;
+  inset: 0;
+}
+
+/* The unrotated image box, placed so the levelled sweep fills the frame. */
+.ingredient-flow__image {
+  position: absolute;
+  left: var(--flow-img-l);
+  top: var(--flow-img-t);
+  width: var(--flow-img-w);
+  height: var(--flow-img-h);
+  rotate: var(--flow-rotate);
+}
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .ingredient-flow__art {
+    transition: opacity 1.4s var(--ease-organic);
+  }
+  /* Before its reveal the sweep is already there, faintly; it then deepens.
+     Opacity only: the frame never moves out of its centred bounds, and if
+     the reveal never runs the art is still visible. */
+  [data-reveal="flow"]:not([data-revealed]) .ingredient-flow__art {
+    opacity: 0.4;
+  }
+}

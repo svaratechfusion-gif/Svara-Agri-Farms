@@ -1,0 +1,357 @@
+/* ----------------------------------------------------------------------------
+   SVARA Leaf Button System
+
+   One botanical silhouette for every action: an elongated blade with two
+   rounded shoulders and two softly pointed tips (top-right, bottom-left), like
+   a moringa leaflet laid on its side. It is drawn with border-radius alone, so
+   borders, backgrounds and the focus ring all follow the same outline and the
+   whole rectangle stays clickable. Variants change colour, never shape.
+   Component: src/components/ui/LeafButton.tsx
+---------------------------------------------------------------------------- */
+
+@layer components {
+  .leaf-btn {
+    --leaf-bg: var(--color-forest);
+    --leaf-fg: var(--color-ivory);
+    --leaf-border: var(--color-forest);
+    --leaf-bg-hover: var(--color-forest-deep);
+    --leaf-fg-hover: var(--leaf-fg);
+    --leaf-border-hover: var(--leaf-bg-hover);
+    --leaf-round: 2.1rem;
+    --leaf-tip: 0.3rem;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    min-height: 3rem;
+    padding: 0.8rem 2.1rem;
+    border: 1px solid var(--leaf-border);
+    border-radius: var(--leaf-round) var(--leaf-tip) var(--leaf-round) var(--leaf-tip) / 82% 18% 82%
+      18%;
+    background-color: var(--leaf-bg);
+    /* A soft band of light that passes along the blade on hover, once. */
+    background-image: linear-gradient(
+      105deg,
+      transparent 38%,
+      var(--leaf-sheen, rgb(247 243 232 / 0.1)) 50%,
+      transparent 62%
+    );
+    background-size: 260% 100%;
+    background-position: 100% 0;
+    background-repeat: no-repeat;
+    color: var(--leaf-fg);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    isolation: isolate;
+    transition:
+      background-color 0.45s var(--ease-organic),
+      background-position 1.1s var(--ease-organic),
+      color 0.45s var(--ease-organic),
+      border-color 0.45s var(--ease-organic),
+      border-radius 0.6s var(--ease-organic),
+      transform 0.45s var(--ease-organic);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .leaf-btn:hover:not(:disabled, [aria-disabled="true"]) {
+    --leaf-round: 2.5rem;
+    background-color: var(--leaf-bg-hover);
+    background-position: 0 0;
+    color: var(--leaf-fg-hover);
+    border-color: var(--leaf-border-hover);
+    transform: translate3d(0, -1px, 0);
+  }
+
+  .leaf-btn:active:not(:disabled, [aria-disabled="true"]) {
+    transform: translate3d(0, 1px, 0);
+  }
+
+  .leaf-btn:focus-visible {
+    outline: 2px solid var(--color-botanical);
+    outline-offset: 3px;
+  }
+
+  .leaf-btn__label {
+    position: relative;
+  }
+
+  .leaf-btn__icon {
+    flex: none;
+    transition: transform 0.5s var(--ease-organic);
+  }
+  /* Arrows lean toward where they lead (the left arrow's flip uses `scale`). */
+  .leaf-btn:hover .leaf-btn__label + .leaf-btn__icon {
+    transform: translate3d(3px, 0, 0);
+  }
+  .leaf-btn:hover .leaf-btn__icon:first-child {
+    transform: translate3d(-3px, 0, 0);
+  }
+
+  /* Sizes keep at least a 44px touch target. `sm` is the Compact leaf button. */
+  .leaf-btn--sm {
+    --leaf-round: 1.75rem;
+    min-height: 2.75rem;
+    padding: 0.65rem 1.6rem;
+    font-size: 0.6875rem;
+    gap: 0.6rem;
+  }
+  .leaf-btn--sm:hover:not(:disabled, [aria-disabled="true"]) {
+    --leaf-round: 2.1rem;
+  }
+  .leaf-btn--lg {
+    --leaf-round: 2.6rem;
+    min-height: 3.5rem;
+    padding: 1rem 2.6rem;
+    font-size: 0.8125rem;
+  }
+  .leaf-btn--lg:hover:not(:disabled, [aria-disabled="true"]) {
+    --leaf-round: 3rem;
+  }
+  /* On phones a large leaf keeps its height but gives its width to the label. */
+  @media (max-width: 30rem) {
+    .leaf-btn--lg {
+      padding-inline: 1.6rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+    }
+  }
+
+  /* A. Primary — forest blade, ivory label. */
+  .leaf-btn--primary {
+    box-shadow: inset 0 1px 0 rgb(247 243 232 / 0.08);
+  }
+
+  /* Icon-only botanical control: a short leaf around a single glyph. It must
+     carry an accessible name (LeafIconButton requires `label`). */
+  .leaf-btn--icon {
+    --leaf-round: 1.35rem;
+    width: 3.25rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+  }
+  .leaf-btn--icon:hover:not(:disabled, [aria-disabled="true"]) {
+    --leaf-round: 1.6rem;
+  }
+
+  /* B. Secondary — ivory blade, forest outline and label. */
+  .leaf-btn--secondary {
+    --leaf-sheen: rgb(23 60 39 / 0.06);
+    --leaf-bg: var(--color-ivory);
+    --leaf-fg: var(--color-forest);
+    --leaf-border: var(--color-forest);
+    --leaf-bg-hover: var(--color-ivory-deep);
+    --leaf-border-hover: var(--color-forest);
+  }
+
+  /* C. Outline — transparent blade with a fine edge, for understated actions. */
+  .leaf-btn--outline {
+    --leaf-sheen: rgb(23 60 39 / 0.06);
+    --leaf-bg: transparent;
+    --leaf-fg: var(--color-forest);
+    --leaf-border: rgb(23 60 39 / 0.45);
+    --leaf-bg-hover: rgb(23 60 39 / 0.06);
+    --leaf-border-hover: var(--color-forest);
+    font-weight: 500;
+  }
+
+  /* On forest or photography (any [data-surface="dark"]) the blade inverts. */
+  :where([data-surface="dark"]) .leaf-btn--primary,
+  .leaf-btn--primary.leaf-btn--on-dark {
+    --leaf-sheen: rgb(255 248 225 / 0.35);
+    --leaf-bg: var(--color-harvest);
+    --leaf-fg: var(--color-forest-deep);
+    --leaf-border: var(--color-harvest);
+    --leaf-bg-hover: #d4b26c;
+    --leaf-border-hover: #d4b26c;
+    box-shadow: 0 10px 30px -18px rgb(15 42 27 / 0.6);
+  }
+  :where([data-surface="dark"]) .leaf-btn--secondary,
+  .leaf-btn--secondary.leaf-btn--on-dark {
+    --leaf-bg: rgb(15 42 27 / 0.35);
+    --leaf-fg: var(--color-ivory);
+    --leaf-border: var(--color-ivory);
+    --leaf-bg-hover: rgb(15 42 27 / 0.6);
+    --leaf-border-hover: var(--color-ivory);
+  }
+  :where([data-surface="dark"]) .leaf-btn--outline,
+  .leaf-btn--outline.leaf-btn--on-dark {
+    --leaf-fg: var(--color-ivory);
+    --leaf-border: rgb(247 243 232 / 0.55);
+    --leaf-bg-hover: rgb(247 243 232 / 0.1);
+    --leaf-border-hover: var(--color-ivory);
+  }
+  :where([data-surface="dark"]) .leaf-btn:focus-visible,
+  .leaf-btn--on-dark:focus-visible {
+    outline-color: var(--color-harvest);
+  }
+
+  /* Disabled and loading. */
+  .leaf-btn:disabled,
+  .leaf-btn[aria-disabled="true"] {
+    --leaf-bg: var(--color-parchment);
+    --leaf-fg: rgb(60 69 61 / 0.85);
+    --leaf-border: var(--color-parchment);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .leaf-btn--outline:disabled,
+  .leaf-btn--outline[aria-disabled="true"] {
+    --leaf-bg: transparent;
+    --leaf-border: rgb(24 32 25 / 0.2);
+  }
+  .leaf-btn[data-loading] {
+    --leaf-bg: var(--color-forest);
+    --leaf-fg: rgb(247 243 232 / 0.85);
+    --leaf-border: var(--color-forest);
+    cursor: progress;
+  }
+  .leaf-btn__sprout {
+    position: absolute;
+    inset-inline: 30%;
+    bottom: 0.55rem;
+    height: 1px;
+    background: currentColor;
+    transform-origin: left;
+    animation: leaf-sprout 1.4s var(--ease-organic) infinite;
+  }
+
+  /* A whole card can host a decorative leaf button: hovering the card (the
+     real link) moves the blade exactly as hovering the button would. */
+  .leaf-btn-host:hover .leaf-btn {
+    --leaf-round: 2.5rem;
+    background-color: var(--leaf-bg-hover);
+    background-position: 0 0;
+    color: var(--leaf-fg-hover);
+    border-color: var(--leaf-border-hover);
+  }
+  .leaf-btn-host:hover .leaf-btn__label + .leaf-btn__icon {
+    transform: translate3d(3px, 0, 0);
+  }
+
+  /* The same silhouette, smaller, for quiet controls: steppers, size options. */
+  .leaf-shape {
+    border-radius: 1.4rem 0.25rem 1.4rem 0.25rem / 80% 20% 80% 20%;
+  }
+
+  /* Leaf chips — selectable stages and filters (aria-pressed / aria-current). */
+  .leaf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 1.15rem;
+    border: 1px solid rgb(24 32 25 / 0.18);
+    border-radius: 1.2rem 0.22rem 1.2rem 0.22rem / 80% 20% 80% 20%;
+    color: var(--color-ink-soft);
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 0.4s var(--ease-organic),
+      color 0.4s var(--ease-organic),
+      border-color 0.4s var(--ease-organic);
+  }
+  .leaf-chip:hover {
+    border-color: var(--color-forest);
+    color: var(--color-forest);
+  }
+  .leaf-chip[aria-pressed="true"],
+  .leaf-chip[aria-current] {
+    background: var(--color-forest);
+    border-color: var(--color-forest);
+    color: var(--color-ivory);
+  }
+  :where([data-surface="dark"]) .leaf-chip {
+    border-color: rgb(247 243 232 / 0.3);
+    color: rgb(247 243 232 / 0.75);
+  }
+  :where([data-surface="dark"]) .leaf-chip:hover {
+    border-color: var(--color-ivory);
+    color: var(--color-ivory);
+  }
+  :where([data-surface="dark"]) .leaf-chip[aria-pressed="true"],
+  :where([data-surface="dark"]) .leaf-chip[aria-current] {
+    background: var(--color-ivory);
+    border-color: var(--color-ivory);
+    color: var(--color-forest);
+  }
+
+  /* D. Textual leaf link — a leaflet glyph, a label and a hairline arrow. */
+  .leaf-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.75rem;
+    color: var(--color-forest);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .leaf-link__leaf {
+    flex: none;
+    color: var(--color-botanical);
+    transition: transform 0.6s var(--ease-organic);
+  }
+  .leaf-link__label {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    padding-bottom: 0.2rem;
+    transition: background-size 0.5s var(--ease-organic);
+  }
+  .leaf-link__arrow {
+    flex: none;
+    transition: transform 0.5s var(--ease-organic);
+  }
+  .leaf-link:hover .leaf-link__label,
+  .leaf-link:focus-visible .leaf-link__label {
+    background-size: 100% 1px;
+  }
+  .leaf-link:hover .leaf-link__leaf {
+    transform: rotate(-14deg);
+  }
+  .leaf-link:hover .leaf-link__label + .leaf-link__arrow {
+    transform: translate3d(3px, 0, 0);
+  }
+  .leaf-link:hover .leaf-link__arrow:first-child {
+    transform: translate3d(-3px, 0, 0);
+  }
+  :where([data-surface="dark"]) .leaf-link,
+  .leaf-link--on-dark {
+    color: var(--color-ivory);
+  }
+  :where([data-surface="dark"]) .leaf-link__leaf,
+  .leaf-link--on-dark .leaf-link__leaf {
+    color: var(--color-harvest);
+  }
+}
+
+@keyframes leaf-sprout {
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  70% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,1135 @@
+{
+  "schema": "bible-strong/avatar-definition",
+  "schemaVersion": 1,
+  "name": "SVARA",
+  "body": {
+    "primary": {
+      "type": "sphere",
+      "width": 140,
+      "height": 160,
+      "depth": 132,
+      "roundness": 1
+    },
+    "nodes": []
+  },
+  "colors": {
+    "body": "#173C27",
+    "eyes": "#0D1610"
+  },
+  "expressions": {
+    "calm": {
+      "head": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "eyes": {
+        "left": {
+          "width": 15,
+          "height": 38,
+          "x": 0,
+          "y": 0,
+          "angle": 0
+        },
+        "right": {
+          "width": 15,
+          "height": 38,
+          "x": 0,
+          "y": 0,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "soft-left": {
+      "head": {
+        "x": 0,
+        "y": -8,
+        "z": -2
+      },
+      "eyes": {
+        "left": {
+          "width": 15,
+          "height": 37,
+          "x": -5,
+          "y": -1,
+          "angle": 0
+        },
+        "right": {
+          "width": 14,
+          "height": 36,
+          "x": -5,
+          "y": -1,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "soft-right": {
+      "head": {
+        "x": 0,
+        "y": 8,
+        "z": 2
+      },
+      "eyes": {
+        "left": {
+          "width": 14,
+          "height": 36,
+          "x": 5,
+          "y": -1,
+          "angle": 0
+        },
+        "right": {
+          "width": 15,
+          "height": 37,
+          "x": 5,
+          "y": -1,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "gaze-up": {
+      "head": {
+        "x": -8,
+        "y": 0,
+        "z": 0
+      },
+      "eyes": {
+        "left": {
+          "width": 15,
+          "height": 34,
+          "x": -1,
+          "y": -7,
+          "angle": 0
+        },
+        "right": {
+          "width": 15,
+          "height": 34,
+          "x": -1,
+          "y": -7,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "slowDrift",
+        "body": "none"
+      }
+    },
+    "attentive": {
+      "head": {
+        "x": 7,
+        "y": 0,
+        "z": 0
+      },
+      "eyes": {
+        "left": {
+          "width": 18,
+          "height": 44,
+          "x": 0,
+          "y": 2,
+          "angle": 0
+        },
+        "right": {
+          "width": 18,
+          "height": 44,
+          "x": 0,
+          "y": 2,
+          "angle": 0
+        },
+        "spacing": 19
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "attentive-tilt": {
+      "head": {
+        "x": 7,
+        "y": 3,
+        "z": 5
+      },
+      "eyes": {
+        "left": {
+          "width": 18,
+          "height": 43,
+          "x": 1,
+          "y": 2,
+          "angle": -4
+        },
+        "right": {
+          "width": 18,
+          "height": 43,
+          "x": 1,
+          "y": 2,
+          "angle": -4
+        },
+        "spacing": 19
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "ponder-up-left": {
+      "head": {
+        "x": -6,
+        "y": -6,
+        "z": -5
+      },
+      "eyes": {
+        "left": {
+          "width": 15,
+          "height": 33,
+          "x": -5,
+          "y": -8,
+          "angle": 6
+        },
+        "right": {
+          "width": 13,
+          "height": 28,
+          "x": -5,
+          "y": -7,
+          "angle": 6
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "slowDrift",
+        "body": "none"
+      }
+    },
+    "ponder-up-right": {
+      "head": {
+        "x": -6,
+        "y": 6,
+        "z": 5
+      },
+      "eyes": {
+        "left": {
+          "width": 13,
+          "height": 28,
+          "x": 5,
+          "y": -7,
+          "angle": -6
+        },
+        "right": {
+          "width": 15,
+          "height": 33,
+          "x": 5,
+          "y": -8,
+          "angle": -6
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "slowDrift",
+        "body": "none"
+      }
+    },
+    "scan-left": {
+      "head": {
+        "x": 1,
+        "y": -14,
+        "z": -3
+      },
+      "eyes": {
+        "left": {
+          "width": 15,
+          "height": 36,
+          "x": -9,
+          "y": 1,
+          "angle": 0
+        },
+        "right": {
+          "width": 14,
+          "height": 34,
+          "x": -9,
+          "y": 1,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "scan-right": {
+      "head": {
+        "x": 1,
+        "y": 14,
+        "z": 3
+      },
+      "eyes": {
+        "left": {
+          "width": 14,
+          "height": 34,
+          "x": 9,
+          "y": 1,
+          "angle": 0
+        },
+        "right": {
+          "width": 15,
+          "height": 36,
+          "x": 9,
+          "y": 1,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "scan-low": {
+      "head": {
+        "x": 9,
+        "y": 0,
+        "z": 0
+      },
+      "eyes": {
+        "left": {
+          "width": 15,
+          "height": 32,
+          "x": 0,
+          "y": 6,
+          "angle": 0
+        },
+        "right": {
+          "width": 15,
+          "height": 32,
+          "x": 0,
+          "y": 6,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "explain": {
+      "head": {
+        "x": 2,
+        "y": 4,
+        "z": 3
+      },
+      "eyes": {
+        "left": {
+          "width": 16,
+          "height": 38,
+          "x": 2,
+          "y": -1,
+          "angle": -3
+        },
+        "right": {
+          "width": 16,
+          "height": 38,
+          "x": 2,
+          "y": -1,
+          "angle": -3
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "explain-nod": {
+      "head": {
+        "x": 6,
+        "y": 4,
+        "z": 3
+      },
+      "eyes": {
+        "left": {
+          "width": 16,
+          "height": 36,
+          "x": 2,
+          "y": 2,
+          "angle": -3
+        },
+        "right": {
+          "width": 16,
+          "height": 36,
+          "x": 2,
+          "y": 2,
+          "angle": -3
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "happy-squint": {
+      "head": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "eyes": {
+        "left": {
+          "width": 20,
+          "height": 12,
+          "x": 0,
+          "y": -3,
+          "angle": -8
+        },
+        "right": {
+          "width": 20,
+          "height": 12,
+          "x": 0,
+          "y": -3,
+          "angle": 8
+        },
+        "spacing": 22
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "happy-tilt": {
+      "head": {
+        "x": 0,
+        "y": 4,
+        "z": 7
+      },
+      "eyes": {
+        "left": {
+          "width": 20,
+          "height": 12,
+          "x": 1,
+          "y": -3,
+          "angle": -8
+        },
+        "right": {
+          "width": 20,
+          "height": 12,
+          "x": 1,
+          "y": -3,
+          "angle": 8
+        },
+        "spacing": 22
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "bright-wide": {
+      "head": {
+        "x": -4,
+        "y": 0,
+        "z": 0
+      },
+      "eyes": {
+        "left": {
+          "width": 19,
+          "height": 48,
+          "x": 0,
+          "y": -2,
+          "angle": 0
+        },
+        "right": {
+          "width": 19,
+          "height": 48,
+          "x": 0,
+          "y": -2,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "drowsy": {
+      "head": {
+        "x": 5,
+        "y": 0,
+        "z": -3
+      },
+      "eyes": {
+        "left": {
+          "width": 17,
+          "height": 14,
+          "x": 0,
+          "y": 5,
+          "angle": 0
+        },
+        "right": {
+          "width": 17,
+          "height": 14,
+          "x": 0,
+          "y": 5,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "slowDrift",
+        "body": "slowDrift"
+      }
+    },
+    "asleep": {
+      "head": {
+        "x": 8,
+        "y": 0,
+        "z": -4
+      },
+      "eyes": {
+        "left": {
+          "width": 18,
+          "height": 4,
+          "x": 0,
+          "y": 7,
+          "angle": 0
+        },
+        "right": {
+          "width": 18,
+          "height": 4,
+          "x": 0,
+          "y": 7,
+          "angle": 0
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "slowDrift"
+      }
+    },
+    "concerned": {
+      "head": {
+        "x": 4,
+        "y": 0,
+        "z": 0
+      },
+      "eyes": {
+        "left": {
+          "width": 15,
+          "height": 32,
+          "x": 0,
+          "y": 3,
+          "angle": 13
+        },
+        "right": {
+          "width": 15,
+          "height": 32,
+          "x": 0,
+          "y": 3,
+          "angle": -13
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "concerned-side": {
+      "head": {
+        "x": 4,
+        "y": -6,
+        "z": -3
+      },
+      "eyes": {
+        "left": {
+          "width": 14,
+          "height": 30,
+          "x": -4,
+          "y": 3,
+          "angle": 13
+        },
+        "right": {
+          "width": 14,
+          "height": 30,
+          "x": -4,
+          "y": 3,
+          "angle": -13
+        },
+        "spacing": 20
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    },
+    "farewell": {
+      "head": {
+        "x": 0,
+        "y": 6,
+        "z": 9
+      },
+      "eyes": {
+        "left": {
+          "width": 20,
+          "height": 12,
+          "x": 2,
+          "y": -3,
+          "angle": -8
+        },
+        "right": {
+          "width": 20,
+          "height": 12,
+          "x": 2,
+          "y": -3,
+          "angle": 8
+        },
+        "spacing": 22
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "none",
+        "body": "none"
+      }
+    }
+  },
+  "expressionOrder": [
+    "calm",
+    "soft-left",
+    "soft-right",
+    "gaze-up",
+    "attentive",
+    "attentive-tilt",
+    "ponder-up-left",
+    "ponder-up-right",
+    "scan-left",
+    "scan-right",
+    "scan-low",
+    "explain",
+    "explain-nod",
+    "happy-squint",
+    "happy-tilt",
+    "bright-wide",
+    "drowsy",
+    "asleep",
+    "concerned",
+    "concerned-side",
+    "farewell"
+  ],
+  "animations": {
+    "idle": {
+      "playbackMode": "loop",
+      "steps": [
+        {
+          "expression": "calm",
+          "holdMs": 5600,
+          "transitionMs": 600,
+          "transition": "smooth"
+        },
+        {
+          "expression": "soft-left",
+          "holdMs": 2600,
+          "transitionMs": 700,
+          "transition": "smooth"
+        },
+        {
+          "expression": "calm",
+          "holdMs": 4200,
+          "transitionMs": 600,
+          "transition": "smooth"
+        },
+        {
+          "expression": "soft-right",
+          "holdMs": 2400,
+          "transitionMs": 700,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 2400,
+        "minIntervalMs": 3400,
+        "maxIntervalMs": 6400,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Idle",
+        "description": "Calm, mostly still; an occasional glance to either side and a natural blink.",
+        "group": "SVARA"
+      }
+    },
+    "greeting": {
+      "playbackMode": "once",
+      "steps": [
+        {
+          "expression": "bright-wide",
+          "holdMs": 500,
+          "transitionMs": 260,
+          "transition": "smooth"
+        },
+        {
+          "expression": "happy-tilt",
+          "holdMs": 1100,
+          "transitionMs": 360,
+          "transition": "smooth"
+        },
+        {
+          "expression": "calm",
+          "holdMs": 500,
+          "transitionMs": 420,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 1500,
+        "minIntervalMs": 4000,
+        "maxIntervalMs": 6000,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Greeting",
+        "description": "Brightens, a warm squint with a small head tilt, then settles.",
+        "group": "SVARA"
+      }
+    },
+    "listening": {
+      "playbackMode": "loop",
+      "steps": [
+        {
+          "expression": "attentive",
+          "holdMs": 4200,
+          "transitionMs": 420,
+          "transition": "smooth"
+        },
+        {
+          "expression": "attentive-tilt",
+          "holdMs": 2600,
+          "transitionMs": 520,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 2200,
+        "minIntervalMs": 3200,
+        "maxIntervalMs": 5200,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Listening",
+        "description": "Wider, attentive eyes and a slight lean towards you.",
+        "group": "SVARA"
+      }
+    },
+    "thinking": {
+      "playbackMode": "loop",
+      "steps": [
+        {
+          "expression": "ponder-up-left",
+          "holdMs": 2200,
+          "transitionMs": 520,
+          "transition": "smooth"
+        },
+        {
+          "expression": "gaze-up",
+          "holdMs": 1600,
+          "transitionMs": 520,
+          "transition": "smooth"
+        },
+        {
+          "expression": "ponder-up-right",
+          "holdMs": 2200,
+          "transitionMs": 520,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 2000,
+        "minIntervalMs": 2800,
+        "maxIntervalMs": 4600,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Thinking",
+        "description": "Gaze drifts upward, side to side, unhurried.",
+        "group": "SVARA"
+      }
+    },
+    "searching": {
+      "playbackMode": "loop",
+      "steps": [
+        {
+          "expression": "scan-left",
+          "holdMs": 1100,
+          "transitionMs": 440,
+          "transition": "smooth"
+        },
+        {
+          "expression": "scan-low",
+          "holdMs": 800,
+          "transitionMs": 440,
+          "transition": "smooth"
+        },
+        {
+          "expression": "scan-right",
+          "holdMs": 1100,
+          "transitionMs": 440,
+          "transition": "smooth"
+        },
+        {
+          "expression": "calm",
+          "holdMs": 500,
+          "transitionMs": 360,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 1800,
+        "minIntervalMs": 2600,
+        "maxIntervalMs": 4200,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Searching",
+        "description": "Looks around, low and to each side, as if exploring.",
+        "group": "SVARA"
+      }
+    },
+    "explaining": {
+      "playbackMode": "loop",
+      "steps": [
+        {
+          "expression": "explain",
+          "holdMs": 2400,
+          "transitionMs": 420,
+          "transition": "smooth"
+        },
+        {
+          "expression": "explain-nod",
+          "holdMs": 900,
+          "transitionMs": 320,
+          "transition": "smooth"
+        },
+        {
+          "expression": "explain",
+          "holdMs": 2000,
+          "transitionMs": 420,
+          "transition": "smooth"
+        },
+        {
+          "expression": "attentive",
+          "holdMs": 1400,
+          "transitionMs": 420,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 2000,
+        "minIntervalMs": 3000,
+        "maxIntervalMs": 5000,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Explaining",
+        "description": "Engaged, with small nods for emphasis.",
+        "group": "SVARA"
+      }
+    },
+    "happy": {
+      "playbackMode": "loop",
+      "steps": [
+        {
+          "expression": "happy-squint",
+          "holdMs": 3200,
+          "transitionMs": 380,
+          "transition": "smooth"
+        },
+        {
+          "expression": "happy-tilt",
+          "holdMs": 2200,
+          "transitionMs": 480,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": false,
+        "initialDelayMs": 2400,
+        "minIntervalMs": 3400,
+        "maxIntervalMs": 6400,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Happy",
+        "description": "A warm, bright squint.",
+        "group": "SVARA"
+      }
+    },
+    "excited": {
+      "playbackMode": "once",
+      "steps": [
+        {
+          "expression": "bright-wide",
+          "holdMs": 380,
+          "transitionMs": 200,
+          "transition": "smooth"
+        },
+        {
+          "expression": "happy-squint",
+          "holdMs": 520,
+          "transitionMs": 240,
+          "transition": "smooth"
+        },
+        {
+          "expression": "bright-wide",
+          "holdMs": 380,
+          "transitionMs": 220,
+          "transition": "smooth"
+        },
+        {
+          "expression": "happy-tilt",
+          "holdMs": 900,
+          "transitionMs": 320,
+          "transition": "smooth"
+        },
+        {
+          "expression": "calm",
+          "holdMs": 400,
+          "transitionMs": 420,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": false,
+        "initialDelayMs": 2400,
+        "minIntervalMs": 3400,
+        "maxIntervalMs": 6400,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Excited",
+        "description": "A brief celebration: bright eyes and a small hop, then calm.",
+        "group": "SVARA"
+      }
+    },
+    "sleeping": {
+      "playbackMode": "loop",
+      "steps": [
+        {
+          "expression": "drowsy",
+          "holdMs": 1800,
+          "transitionMs": 1200,
+          "transition": "smooth"
+        },
+        {
+          "expression": "asleep",
+          "holdMs": 7000,
+          "transitionMs": 1400,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": false,
+        "initialDelayMs": 2400,
+        "minIntervalMs": 3400,
+        "maxIntervalMs": 6400,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Sleeping",
+        "description": "Eyes close slowly; breathing-like rise and fall.",
+        "group": "SVARA"
+      }
+    },
+    "error": {
+      "playbackMode": "loop",
+      "steps": [
+        {
+          "expression": "concerned",
+          "holdMs": 2800,
+          "transitionMs": 460,
+          "transition": "smooth"
+        },
+        {
+          "expression": "concerned-side",
+          "holdMs": 1800,
+          "transitionMs": 520,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 1800,
+        "minIntervalMs": 3000,
+        "maxIntervalMs": 5200,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Concerned",
+        "description": "Concerned but friendly — brows tilt, a small glance away.",
+        "group": "SVARA"
+      }
+    },
+    "goodbye": {
+      "playbackMode": "once",
+      "steps": [
+        {
+          "expression": "happy-squint",
+          "holdMs": 500,
+          "transitionMs": 320,
+          "transition": "smooth"
+        },
+        {
+          "expression": "farewell",
+          "holdMs": 1400,
+          "transitionMs": 420,
+          "transition": "smooth"
+        },
+        {
+          "expression": "drowsy",
+          "holdMs": 500,
+          "transitionMs": 520,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": false,
+        "initialDelayMs": 2400,
+        "minIntervalMs": 3400,
+        "maxIntervalMs": 6400,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Goodbye",
+        "description": "A warm squint and a farewell tilt as the crest waves.",
+        "group": "SVARA"
+      }
+    },
+    "welcome": {
+      "playbackMode": "once",
+      "steps": [
+        {
+          "expression": "bright-wide",
+          "holdMs": 420,
+          "transitionMs": 180,
+          "transition": "smooth"
+        },
+        {
+          "expression": "happy-squint",
+          "holdMs": 560,
+          "transitionMs": 260,
+          "transition": "smooth"
+        },
+        {
+          "expression": "happy-tilt",
+          "holdMs": 1300,
+          "transitionMs": 380,
+          "transition": "smooth"
+        },
+        {
+          "expression": "calm",
+          "holdMs": 420,
+          "transitionMs": 420,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": false,
+        "initialDelayMs": 2400,
+        "minIntervalMs": 3400,
+        "maxIntervalMs": 6400,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Welcome",
+        "description": "The first hello of a visit: the eyes brighten first, a small dip, one gentle hop, then a warm settle.",
+        "group": "SVARA"
+      }
+    },
+    "curious": {
+      "playbackMode": "once",
+      "steps": [
+        {
+          "expression": "bright-wide",
+          "holdMs": 260,
+          "transitionMs": 200,
+          "transition": "smooth"
+        },
+        {
+          "expression": "attentive-tilt",
+          "holdMs": 1500,
+          "transitionMs": 420,
+          "transition": "smooth"
+        },
+        {
+          "expression": "calm",
+          "holdMs": 400,
+          "transitionMs": 460,
+          "transition": "smooth"
+        }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 900,
+        "minIntervalMs": 3400,
+        "maxIntervalMs": 6200,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Curious",
+        "description": "Notices something: a quick brightening, a tilted, attentive look, then calm.",
+        "group": "SVARA"
+      }
+    }
+  },
+  "animationOrder": [
+    "idle",
+    "greeting",
+    "listening",
+    "thinking",
+    "searching",
+    "explaining",
+    "happy",
+    "excited",
+    "sleeping",
+    "error",
+    "goodbye"
+  ]
+}

@@ -1,0 +1,773 @@
+/* ----------------------------------------------------------------------------
+   SVARA motion choreography
+
+   One rule for everything here: motion only runs when scripting is enabled and
+   the reader allows it. Without either, every element is simply in place.
+   Scroll-linked values come from the single rAF loop (`--progress`, 0–1);
+   one-shot reveals come from MotionRoot (`data-revealed`).
+---------------------------------------------------------------------------- */
+
+/* Motion tokens — every signature experience draws its tempo from these. */
+:root {
+  --motion-reveal: 2.1s; /* organic masks opening (leaf, product) */
+  --motion-draw: 1.8s; /* veins drawing once */
+  --motion-follow: 0.45s; /* smoothing for scroll-linked values */
+  --motion-settle: 0.9s; /* labels and small states arriving */
+}
+
+/* SVG veins drawn with pathLength="1" so dash maths is unit-free. */
+[data-draw] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  /* A vein draws once its reveal parent enters the viewport. */
+  [data-reveal] [data-draw="reveal"],
+  [data-draw="reveal"][data-reveal] {
+    transition: stroke-dashoffset var(--motion-draw) var(--ease-cinematic);
+    transition-delay: calc(var(--draw-delay, 0) * 1s);
+  }
+  [data-reveal]:not([data-revealed]) [data-draw="reveal"],
+  [data-draw="reveal"][data-reveal]:not([data-revealed]) {
+    stroke-dashoffset: 1;
+  }
+
+  /* A vein that follows scroll progress of its nearest `--progress` owner. */
+  [data-draw="scroll"] {
+    /* In px (equal to pathLength units here): Firefox rejects a unitless length. */
+    stroke-dashoffset: calc((1 - var(--progress, 1)) * 1px);
+  }
+
+  /* Stems in Branches grow downward as the block is revealed. */
+  [data-reveal="stem"]::before {
+    transform-origin: top;
+    transition: transform 1.6s var(--ease-cinematic);
+  }
+  [data-reveal="stem"]:not([data-revealed])::before {
+    transform: scaleY(0);
+  }
+  [data-reveal="stem"] > * {
+    transition:
+      opacity 1.1s var(--ease-organic),
+      transform 1.1s var(--ease-organic);
+  }
+  [data-reveal="stem"] > :nth-child(2) {
+    transition-delay: 0.25s;
+  }
+  [data-reveal="stem"] > :nth-child(3) {
+    transition-delay: 0.5s;
+  }
+  [data-reveal="stem"] > :nth-child(n + 4) {
+    transition-delay: 0.7s;
+  }
+  [data-reveal="stem"]:not([data-revealed]) > * {
+    opacity: 0;
+    transform: translate3d(0.75rem, 0, 0);
+  }
+
+  /* ---- Product reveal: the pouch settles by mid-section, then holds still.
+     s = settle progress, complete at --progress ≈ 0.55. */
+  .product-stage {
+    --settle: min(1, var(--progress, 1) * 1.8);
+  }
+  .product-stage__pouch {
+    transform-origin: 50% 100%;
+    transform: perspective(1600px) translate3d(0, calc((1 - var(--settle)) * 7%), 0)
+      rotateX(calc((1 - var(--settle)) * 9deg)) scale(calc(0.9 + var(--settle) * 0.1));
+  }
+  .product-stage__branch {
+    transform: translate3d(0, calc((0.5 - var(--progress, 0.5)) * 18%), 0)
+      rotate(calc((var(--progress, 0.5) - 0.5) * -6deg));
+  }
+  .product-stage__ground {
+    transform: translate3d(0, calc((0.5 - var(--progress, 0.5)) * 6%), 0);
+  }
+  /* ---- The Ritual: the pouch settles upright by mid-section, the leaf behind
+     it drifts at its own, slower rate. */
+  .ritual-stage {
+    --settle: min(1, var(--progress, 1) * 1.9);
+  }
+  .ritual-stage__pouch {
+    transform-origin: 50% 100%;
+    transform: translate3d(0, calc((1 - var(--settle)) * 6%), 0)
+      scale(calc(0.93 + var(--settle) * 0.07));
+  }
+  .ritual-stage__leaf {
+    transform: translate3d(0, calc((0.5 - var(--progress, 0.5)) * 14%), 0)
+      rotate(calc((var(--progress, 0.5) - 0.5) * 8deg));
+  }
+  .ritual-stage__pouch,
+  .ritual-stage__leaf {
+    transition: transform var(--motion-follow) var(--ease-organic);
+  }
+
+  /* Floating notes arrive from the pouch's side, as if set down beside it. */
+  @media (min-width: 64rem) {
+    .ritual-notes--left[data-reveal]:not([data-revealed]) > * {
+      transform: translate3d(2.5rem, 0.75rem, 0);
+    }
+    .ritual-notes--right[data-reveal]:not([data-revealed]) > * {
+      transform: translate3d(-2.5rem, 0.75rem, 0);
+    }
+    .ritual-notes > :nth-child(2) {
+      translate: 2.5rem 0;
+    }
+    .ritual-notes--right > :nth-child(2) {
+      translate: -2.5rem 0;
+    }
+  }
+
+  /* Range cards: the pack lifts from its card and the sun arc swells. */
+  .range-card__pack,
+  .range-card__arc {
+    transition: transform 0.8s var(--ease-organic);
+  }
+  .range-card:hover .range-card__pack {
+    transform: translate3d(0, -0.5rem, 0) scale(1.03);
+  }
+  .range-card:hover .range-card__arc {
+    transform: scale(1.08);
+  }
+
+  /* ---- The Ingredient: the powder settles onto its ground after the leaf. */
+  .ingredient-powder {
+    transition:
+      transform 2s var(--ease-organic) 0.5s,
+      opacity 1.4s var(--ease-organic) 0.5s;
+  }
+  [data-reveal]:not([data-revealed]) .ingredient-powder {
+    opacity: 0;
+    transform: translate3d(0, 10%, 0) scale(0.95);
+  }
+
+  [data-reveal="product-open"] {
+    clip-path: ellipse(150% 150% at 50% 100%);
+    transition: clip-path var(--motion-reveal) var(--ease-cinematic);
+  }
+  [data-reveal="product-open"]:not([data-revealed]) {
+    clip-path: ellipse(0% 0% at 50% 100%);
+  }
+
+  /* ---- Living Journey Line: the vein draws with the reader's real scroll. */
+  /* The horizontal vein is drawn to the measured stage position (--trace);
+     the vertical pathway follows its list's scroll progress (--progress). */
+  .journey-vein__trace {
+    stroke-dashoffset: calc(1 - var(--trace, var(--progress, 1)));
+    transition: stroke-dashoffset var(--motion-follow) var(--ease-organic);
+  }
+
+  /* ---- Floating leaf: follows the real scroll position through the chapter.
+     --progress 0 → stage enters from below, 0.5 → centred, 1 → leaving above. */
+  /* Enter (0–0.32): from outside the frame, turning in. Hold and open up
+     (0.32–0.68). Exit (0.72–1): drift toward the next chapter and close
+     into an organic mask. */
+  .floating-leaf {
+    --enter: clamp(0, var(--progress, 0.5) / 0.32, 1);
+    --leave: clamp(0, (var(--progress, 0.5) - 0.72) / 0.28, 1);
+  }
+  .floating-leaf__specimen {
+    transform: translate3d(
+        calc((1 - var(--enter)) * 46% + var(--leave) * 10%),
+        calc((1 - var(--enter)) * -14% + var(--leave) * 18%),
+        0
+      )
+      rotate(calc((1 - var(--enter)) * 26deg - var(--leave) * 12deg))
+      scale(calc(0.78 + var(--enter) * 0.26 - var(--leave) * 0.2));
+    clip-path: ellipse(
+      calc(150% - var(--leave) * 110%) calc(150% - var(--leave) * 118%) at 70% 78%
+    );
+    will-change: transform;
+  }
+  .floating-leaf__stage {
+    background-position: calc(50% + (var(--progress, 0.5) - 0.5) * 12%) 50%;
+  }
+  .floating-leaf__leaf {
+    transform: perspective(1400px) rotateX(calc(9deg - var(--progress, 0.5) * 10deg))
+      rotateY(calc((var(--progress, 0.5) - 0.5) * 16deg));
+  }
+  .floating-leaf__shadow {
+    /* As the leaf lifts, its shadow falls further away and fades. */
+    transform: translate(
+        calc(1.5% + var(--progress, 0.5) * 3%),
+        calc(5% + var(--progress, 0.5) * 8%)
+      )
+      scale(0.96);
+    opacity: calc(0.26 - var(--progress, 0.5) * 0.1);
+  }
+  .floating-leaf__foreground {
+    transform: translate3d(0, calc((0.5 - var(--progress, 0.5)) * 45%), 0)
+      rotate(calc((var(--progress, 0.5) - 0.5) * 12deg));
+  }
+  /* Scroll-linked layers follow the scroll position with a brief easing, so
+     wheel steps read as one continuous movement rather than jumps. */
+  .floating-leaf__specimen,
+  .floating-leaf__leaf,
+  .floating-leaf__shadow,
+  .floating-leaf__foreground,
+  .product-stage__pouch,
+  .product-stage__branch,
+  .product-stage__ground {
+    transition:
+      transform var(--motion-follow) var(--ease-organic),
+      opacity var(--motion-follow) var(--ease-organic);
+  }
+
+  /* Entry: the specimen opens through an organic mask from the stem. */
+  [data-reveal="leaf-open"] {
+    clip-path: circle(150% at 22% 82%);
+    transition: clip-path var(--motion-reveal) var(--ease-cinematic);
+  }
+  [data-reveal="leaf-open"]:not([data-revealed]) {
+    clip-path: circle(0% at 22% 82%);
+  }
+  [data-reveal="leaf-open"] .floating-leaf__label {
+    transition: opacity var(--motion-settle) var(--ease-organic) 1.6s;
+  }
+  [data-reveal="leaf-open"]:not([data-revealed]) .floating-leaf__label {
+    opacity: 0;
+  }
+
+  /* ---- Header entrance: line grows from the seal, items settle, seal fades in. */
+  .header-enter .header-vein {
+    animation: vein-grow 1.6s var(--ease-cinematic) 0.45s both;
+  }
+  .header-enter .header-branch path {
+    stroke-dasharray: 1;
+    animation: branch-draw 1.8s var(--ease-cinematic) 0.35s both;
+  }
+  .header-enter .header-item {
+    animation: soft-rise 1.1s var(--ease-organic) both;
+    animation-delay: calc(0.6s + var(--i, 0) * 0.08s);
+  }
+  .header-enter .header-seal {
+    animation: seal-settle 1.4s var(--ease-organic) 0.15s both;
+  }
+
+  /* ---- Full-screen menu: items rise along the midrib in sequence. */
+  dialog[open] .menu-item {
+    animation: soft-rise 0.9s var(--ease-organic) both;
+    animation-delay: calc(0.12s + var(--i, 0) * 0.06s);
+  }
+  dialog[open] .menu-leaf {
+    animation: leaf-unfurl 2.2s var(--ease-cinematic) 0.1s both;
+  }
+
+  /* ---- Product presence: a pointer tilt of a few degrees, never more. */
+  .tilt-stage {
+    perspective: 1400px;
+  }
+  .tilt-object {
+    transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translate3d(0, 0, 0);
+    transition: transform 0.9s var(--ease-organic);
+    will-change: transform;
+  }
+  .tilt-shadow {
+    transform: translate3d(calc(var(--tilt-y, 0deg) * -0.6px), 0, 0)
+      scaleX(calc(1 - var(--tilt-x, 0deg) / 90deg));
+    transition: transform 0.9s var(--ease-organic);
+  }
+
+  /* Product reveal: the plate rises and settles as it enters. */
+  .product-rise {
+    transform: translate3d(0, calc((1 - min(1, var(--progress, 1) * 1.6)) * 8%), 0)
+      scale(calc(0.94 + min(1, var(--progress, 1) * 1.6) * 0.06));
+  }
+
+  /* Hero: the frame settles once the headline has risen, then drifts on scroll —
+     slower than the copy, faster than the land. */
+  .hero-frame-in {
+    animation: frame-settle 2.2s var(--ease-organic) 1.1s both;
+  }
+  /* Hero: the botanical frame drifts slower than the copy, faster than the land. */
+  .hero-frame-layer {
+    transform: translate3d(0, calc(var(--progress, 0) * 7%), 0);
+  }
+
+  /* Our Story: the margin stem grows as the story is read. */
+  .stem::before {
+    transform-origin: top;
+    transform: scaleY(var(--progress, 1));
+  }
+
+  /* Journey stage copy arrives in sequence when its stage becomes active. */
+  [data-journey-stage] .stage-seq {
+    transition:
+      opacity 0.9s var(--ease-organic),
+      transform 0.9s var(--ease-organic);
+  }
+  [data-journey-stage] .stage-seq:nth-child(2) {
+    transition-delay: 0.08s;
+  }
+  [data-journey-stage] .stage-seq:nth-child(3) {
+    transition-delay: 0.16s;
+  }
+  [data-journey-stage] .stage-seq:nth-child(4) {
+    transition-delay: 0.24s;
+  }
+  @media (min-width: 64rem) {
+    [data-journey-stage]:not([data-active]) .stage-seq {
+      opacity: 0.35;
+      transform: translate3d(0, 0.6rem, 0);
+    }
+  }
+
+  /* 404: the fallen leaflet drifts down once and rests. */
+  .leaflet-fall {
+    animation: leaflet-fall 3.4s var(--ease-organic) 0.6s both;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+
+@keyframes vein-grow {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes seal-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes leaf-unfurl {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes leaflet-fall {
+  0% {
+    transform: translate(18px, -170px) rotate(150deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  45% {
+    transform: translate(-6px, -80px) rotate(95deg);
+  }
+  75% {
+    transform: translate(8px, -20px) rotate(30deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes frame-settle {
+  from {
+    opacity: 0;
+    scale: 1.025;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Follow the Leaf — six scenes, six cuts. Each stage frame enters with its own
+   mask (from/to use the same shape function so they interpolate) and its own
+   camera move on the photograph. State comes from the active stage, so every
+   cut plays forwards and backwards with the reader's scroll.
+---------------------------------------------------------------------------- */
+.journey-frame[data-state="future"] {
+  visibility: hidden;
+}
+.journey-frame[data-stage="grow"] {
+  --mask-from: inset(50% 0 50% 0);
+  --mask-to: inset(0 0 0 0);
+  --cam-from: translate3d(0, 5%, 0) scale(1.2);
+  --cam-to: translate3d(0, 0, 0) scale(1.04);
+}
+.journey-frame[data-stage="harvest"] {
+  --mask-from: ellipse(0% 0% at 14% 92%);
+  --mask-to: ellipse(170% 170% at 14% 92%);
+  --cam-from: scale(1.24);
+  --cam-to: scale(1.02);
+  --cam-origin: 18% 88%;
+}
+.journey-frame[data-stage="select"] {
+  --mask-from: circle(0% at 52% 58%);
+  --mask-to: circle(95% at 52% 58%);
+  --cam-from: scale(1.5);
+  --cam-to: scale(1.12);
+  --cam-origin: 40% 60%;
+}
+.journey-frame[data-stage="shade-dry"] {
+  --mask-from: inset(0 0 0 100%);
+  --mask-to: inset(0 0 0 0);
+  --cam-from: translate3d(9%, 0, 0) scale(1.16);
+  --cam-to: translate3d(0, 0, 0) scale(1.06);
+}
+.journey-frame[data-stage="mill"] {
+  --mask-from: inset(0 0 100% 0);
+  --mask-to: inset(0 0 0 0);
+  --cam-from: translate3d(0, -4%, 0) scale(1.18);
+  --cam-to: translate3d(0, 0, 0) scale(1.02);
+  --cam-origin: 70% 30%;
+}
+.journey-frame[data-stage="pack"] {
+  --mask-from: circle(0% at 50% 78%);
+  --mask-to: circle(130% at 50% 78%);
+}
+.journey-frame {
+  clip-path: var(--mask-to);
+}
+.journey-frame__image {
+  transform: var(--cam-to);
+  transform-origin: var(--cam-origin, 50% 50%);
+}
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .journey-frame {
+    transition: clip-path 1.5s var(--ease-cinematic);
+  }
+  .journey-frame[data-state="future"] {
+    clip-path: var(--mask-from);
+    transition:
+      clip-path 1.1s var(--ease-cinematic),
+      visibility 0s linear 1.1s;
+  }
+  .journey-frame__image {
+    transition: transform 2.6s var(--ease-organic);
+  }
+  .journey-frame[data-state="future"] .journey-frame__image {
+    transform: var(--cam-from);
+  }
+  /* Pack: the pouch rises into place once the sun has opened. */
+  .journey-frame__pouch {
+    transition:
+      transform 1.6s var(--ease-organic) 0.45s,
+      opacity 1.2s var(--ease-organic) 0.45s;
+  }
+  .journey-frame[data-state="future"] .journey-frame__pouch {
+    opacity: 0;
+    transform: translate3d(0, 16%, 0) scale(0.92);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   The Ingredient film — fresh leaf → dried branch → powder, scrubbed by the
+   track's --progress. t1 is the leaf-to-branch cut, t2 the branch-to-powder.
+---------------------------------------------------------------------------- */
+.ingredient-film {
+  --t0: clamp(0, var(--progress, 0) / 0.12, 1);
+  --t1: clamp(0, (var(--progress, 0) - 0.24) / 0.18, 1);
+  --t2: clamp(0, (var(--progress, 0) - 0.58) / 0.18, 1);
+  --t3: clamp(0, (var(--progress, 0) - 0.78) / 0.14, 1);
+}
+.ingredient-film__leaf {
+  clip-path: ellipse(calc((1 - var(--t1)) * 72%) calc((1 - var(--t1)) * 46%) at 50% 50%);
+  transform: translate3d(calc((1 - var(--t0)) * -28%), calc((1 - var(--t0)) * 6%), 0)
+    rotate(calc((1 - var(--t0)) * -10deg + var(--t1) * 16deg))
+    scale(calc(0.9 + var(--t0) * 0.1 - var(--t1) * 0.12));
+  opacity: calc(0.2 + var(--t0) * 0.8);
+}
+.ingredient-film__branch {
+  clip-path: ellipse(calc(var(--t1) * 78%) calc(var(--t1) * 60%) at 50% 50%);
+  transform: translate3d(0, calc(var(--t2) * 10%), 0)
+    scale(calc(1.08 - var(--t1) * 0.08 - var(--t2) * 0.18));
+  opacity: calc(1 - var(--t2));
+  filter: blur(calc(var(--t2) * 6px));
+}
+.ingredient-film__powder {
+  transform: translate3d(0, calc((1 - var(--t2)) * 22%), 0)
+    scale(calc(0.86 + var(--t2) * 0.1 + var(--t3) * 0.04));
+  opacity: var(--t2);
+}
+.ingredient-film__shadow {
+  opacity: var(--t3);
+}
+.ingredient-film__vein {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc((1 - var(--progress, 0)) * 1px);
+}
+.ingredient-film__node {
+  scale: 0;
+  transition: scale 0.6s var(--ease-organic);
+}
+.ingredient-film[data-step="0"] .ingredient-film__node[data-index="0"],
+.ingredient-film[data-step="1"] .ingredient-film__node:is([data-index="0"], [data-index="1"]),
+.ingredient-film[data-step="2"] .ingredient-film__node {
+  scale: 1;
+}
+.ingredient-film__step {
+  opacity: 0.3;
+  translate: 0 0.5rem;
+  transition:
+    opacity 0.7s var(--ease-organic),
+    translate 0.7s var(--ease-organic);
+}
+.ingredient-film[data-step="0"] .ingredient-film__step[data-index="0"],
+.ingredient-film[data-step="1"] .ingredient-film__step[data-index="1"],
+.ingredient-film[data-step="2"] .ingredient-film__step[data-index="2"] {
+  opacity: 1;
+  translate: 0 0;
+}
+.ingredient-film__leaf,
+.ingredient-film__branch,
+.ingredient-film__powder {
+  transition:
+    transform var(--motion-follow) var(--ease-organic),
+    opacity var(--motion-follow) var(--ease-organic),
+    clip-path var(--motion-follow) var(--ease-organic);
+  will-change: transform, opacity;
+}
+
+@keyframes branch-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Chapter doors: the scene breathes in and the title steps forward on hover. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .next-chapter__subject {
+    transition: scale 1.4s var(--ease-organic);
+  }
+  .next-chapter:is(:hover, :focus-visible) .next-chapter__subject {
+    scale: 1.05;
+  }
+  .next-chapter__title {
+    transition: translate 0.9s var(--ease-organic);
+  }
+  .next-chapter:is(:hover, :focus-visible) .next-chapter__title {
+    translate: 0.4rem 0;
+  }
+}
+
+/* How it is made: the six plates open one after another along the vein. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .process-sequence [data-reveal="leaf"],
+  .process-sequence [data-reveal="leaf"] img {
+    transition-delay: calc(var(--i, 0) * 0.14s);
+  }
+}
+
+/* Cart: new lines settle in; the empty state's pouch rises as the drawer opens. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .cart-line {
+    animation: soft-rise 0.7s var(--ease-organic) both;
+  }
+  dialog[open] .cart-empty__pouch {
+    animation: pouch-rise 1.2s var(--ease-organic) 0.2s both;
+  }
+  dialog[open] .cart-empty__leaf {
+    animation: leaf-unfurl 1.6s var(--ease-organic) 0.1s both;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Landscape scene — the land settles, foreground leaves part, beats arrive.
+   Wide screens with motion only; elsewhere the settled frame is shown.
+---------------------------------------------------------------------------- */
+@media (min-width: 64rem) and (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .landscape-scene {
+    --p: var(--progress, 1);
+  }
+  .landscape-scene__land {
+    transform: translate3d(0, calc(var(--p) * -3%), 0) scale(calc(1.2 - var(--p) * 0.16));
+  }
+  .landscape-scene__near--left {
+    transform: translate3d(calc(var(--p) * -34%), calc(var(--p) * 14%), 0);
+  }
+  .landscape-scene__near--right {
+    transform: translate3d(calc(var(--p) * 34%), calc(var(--p) * -16%), 0);
+  }
+  .landscape-scene__title {
+    --t: clamp(0, var(--p) / 0.22, 1);
+    opacity: var(--t);
+    transform: translate3d(0, calc((1 - var(--t)) * 2.5rem), 0);
+  }
+  .landscape-scene__beat {
+    --b: clamp(0, (var(--p) - 0.3 - var(--beat, 0) * 0.17) / 0.12, 1);
+    opacity: var(--b);
+    transform: translate3d(0, calc((1 - var(--b)) * 1.5rem), 0);
+  }
+  .landscape-scene__land,
+  .landscape-scene__near,
+  .landscape-scene__title,
+  .landscape-scene__beat {
+    transition:
+      transform var(--motion-follow) var(--ease-organic),
+      opacity var(--motion-follow) var(--ease-organic);
+  }
+}
+
+/* Manifesto: each line darkens in turn; the margin leaf turns with the read. */
+.manifesto__line {
+  color: var(--color-forest);
+}
+@media (min-width: 64rem) and (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .manifesto {
+    --p: var(--progress, 1);
+  }
+  .manifesto__line {
+    --l: clamp(0, var(--p) * var(--lines) * 1.2 - var(--line-i), 1);
+    opacity: calc(0.16 + var(--l) * 0.84);
+    transform: translate3d(calc((1 - var(--l)) * 1.2rem), 0, 0);
+    transition:
+      opacity var(--motion-follow) var(--ease-organic),
+      transform var(--motion-follow) var(--ease-organic);
+  }
+  .manifesto__leaf {
+    transform: rotate(calc(var(--p) * -24deg)) translate3d(0, calc(var(--p) * 12%), 0);
+    transition: transform var(--motion-follow) var(--ease-organic);
+  }
+}
+
+/* Journey opening: the route's vein draws across once the title has risen. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .journey-route__vein path {
+    stroke-dasharray: 1;
+    animation: branch-draw 2.4s var(--ease-cinematic) 1.3s both;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Gesture story — one held frame; each gesture opens over the last from the
+   hands. `--on` is 1 for frames reached, 0 for frames ahead.
+---------------------------------------------------------------------------- */
+.gesture-story__frame {
+  --on: clamp(0, var(--active) - var(--i) + 1, 1);
+  clip-path: circle(calc(var(--on) * 150%) at var(--origin));
+}
+.gesture-story__frame:first-child {
+  clip-path: none;
+}
+.gesture-story__image {
+  transform: scale(calc(1.18 - var(--on) * 0.14));
+  transform-origin: var(--origin);
+}
+.gesture-story__caption {
+  --cur: clamp(0, 1 - max(var(--active) - var(--i), var(--i) - var(--active)), 1);
+  opacity: var(--cur);
+  transform: translate3d(0, calc((1 - var(--cur)) * 0.75rem), 0);
+}
+.gesture-story__tick {
+  --on: clamp(0, var(--active) - var(--i) + 1, 1);
+  background: rgb(247 243 232 / calc(0.3 + var(--on) * 0.7));
+}
+@media (min-width: 64rem) and (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .gesture-story__step {
+    --cur: clamp(0, 1 - max(var(--active) - var(--i), var(--i) - var(--active)), 1);
+    opacity: calc(0.3 + var(--cur) * 0.7);
+    transform: translate3d(calc(var(--cur) * 0.6rem), 0, 0);
+    transition:
+      opacity 0.7s var(--ease-organic),
+      transform 0.7s var(--ease-organic);
+  }
+  .gesture-story__frame {
+    transition: clip-path 1.3s var(--ease-cinematic);
+  }
+  .gesture-story__image {
+    transition: transform 2.2s var(--ease-organic);
+  }
+  .gesture-story__caption,
+  .gesture-story__tick {
+    transition:
+      opacity 0.7s var(--ease-organic),
+      transform 0.7s var(--ease-organic),
+      background-color 0.7s var(--ease-organic);
+  }
+}
+
+/* The Shade: the light bands slide across the shelter faster than the image. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .shade-room__light {
+    transform: translate3d(calc((var(--progress, 0.5) - 0.5) * -18%), 0, 0);
+    opacity: calc(
+      0.55 + (1 - max(var(--progress, 0.5) - 0.5, 0.5 - var(--progress, 0.5)) * 2) * 0.45
+    );
+    transition: transform var(--motion-follow) var(--ease-organic);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Expanding scene — a leaf plate grows to the full width; the camera eases
+   back as it opens; then the words and marks arrive. Settled elsewhere.
+---------------------------------------------------------------------------- */
+@media (min-width: 64rem) and (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .expanding-scene {
+    --open: clamp(0, var(--progress, 1) / 0.45, 1);
+    --words: clamp(0, (var(--progress, 1) - 0.42) / 0.18, 1);
+  }
+  .expanding-scene__frame {
+    clip-path: inset(
+      calc((1 - var(--open)) * 22%) calc((1 - var(--open)) * 30%) round
+        calc((1 - var(--open)) * 9rem) calc((1 - var(--open)) * 0.5rem)
+        calc((1 - var(--open)) * 9rem) calc((1 - var(--open)) * 0.5rem)
+    );
+  }
+  .expanding-scene__image {
+    transform: scale(calc(1.35 - var(--open) * 0.3));
+  }
+  .expanding-scene__copy {
+    opacity: var(--words);
+    transform: translate3d(0, calc((1 - var(--words)) * 2.5rem), 0);
+  }
+  .expanding-scene__mark {
+    --mk: clamp(0, (var(--progress, 1) - 0.55 - var(--m) * (0.3 / var(--marks))) / 0.08, 1);
+    opacity: var(--mk);
+    transform: translate3d(0, calc((1 - var(--mk)) * 0.75rem), 0);
+  }
+  .expanding-scene__frame,
+  .expanding-scene__image,
+  .expanding-scene__copy,
+  .expanding-scene__mark {
+    transition:
+      clip-path var(--motion-follow) var(--ease-organic),
+      transform var(--motion-follow) var(--ease-organic),
+      opacity var(--motion-follow) var(--ease-organic);
+  }
+}
+
+/* Triptych plates and future packs open in turn. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal="leaf"][style*="--i"],
+  [data-reveal="leaf"][style*="--i"] img {
+    transition-delay: calc(var(--i, 0) * 0.16s);
+  }
+}
+
+/* Cart: the count badge pops in whenever the number changes. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .cart-button__badge {
+    animation: badge-pop 0.6s var(--ease-organic) both;
+  }
+}
+@keyframes badge-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}

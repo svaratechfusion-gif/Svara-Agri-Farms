@@ -1,26 +1,536 @@
 @import "tailwindcss";
+@import "../styles/leaf-buttons.css";
+@import "../styles/botanical.css";
+@import "../styles/motion.css";
+@import "../styles/mascot.css";
+@import "../styles/flow.css";
+@import "../styles/roadmap.css";
+
+/* ----------------------------------------------------------------------------
+   SVARA Farms — design tokens
+   Palette, type and spacing are derived from the Stitch DESIGN.md and the
+   brand brief. Ivory is the canvas; forest green is used sparingly.
+---------------------------------------------------------------------------- */
+
+@theme {
+  --color-ivory: #f7f3e8;
+  --color-ivory-deep: #efe9da;
+  --color-parchment: #e7dfcc;
+  --color-forest: #173c27;
+  --color-forest-deep: #0f2a1b;
+  --color-botanical: #5c783d;
+  --color-earth: #87684b;
+  --color-earth-ink: #6e5339;
+  --color-harvest: #c5a15a;
+  --color-ink: #182019;
+  --color-ink-soft: #3c453d;
+  /* Form errors and failed requests: a dried-chilli red, ~6:1 on ivory. */
+  --color-alert: #9b3b2e;
+  --color-rule: rgb(24 32 25 / 0.14);
+  --color-rule-light: rgb(247 243 232 / 0.24);
+
+  --font-serif: var(--font-playfair), "Times New Roman", serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --ease-organic: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-cinematic: cubic-bezier(0.65, 0.05, 0.36, 1);
+
+  --breakpoint-xs: 22.5rem;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --gutter-page: 1.25rem;
+  /* The header grows with the official seal at its centre (see SiteHeader). */
+  --header-height: 4.75rem;
+  --section-space: clamp(5rem, 3rem + 8vw, 11rem);
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (min-width: 48rem) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --gutter-page: 2.5rem;
+    --header-height: 5.5rem;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (min-width: 80rem) {
+  :root {
+    --gutter-page: 4rem;
+    --header-height: 6.75rem;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Base
+---------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    background: var(--color-ivory);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: var(--color-forest);
+    color: var(--color-ivory);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-botanical);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  [data-surface="dark"] :focus-visible {
+    outline-color: var(--color-harvest);
+  }
+
+  img {
+    user-select: none;
+  }
+
+  /* Native modal dialogs (menu, cart) hold the page still behind them. */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Layout primitives
+---------------------------------------------------------------------------- */
+
+/* Contained: a ~1360px measure plus page gutters. Full-bleed sections simply
+   sit outside it; asymmetric/editorial splits are column spans on the grid. */
+@utility container-page {
+  width: 100%;
+  max-width: calc(85rem + 2 * var(--gutter-page));
+  margin-inline: auto;
+  padding-inline: var(--gutter-page);
+}
+
+@utility grid-editorial {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 1rem;
+  @media (min-width: 48rem) {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    column-gap: 1.5rem;
+  }
+  @media (min-width: 64rem) {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 2rem;
+  }
+}
+
+@utility section-space {
+  padding-block: var(--section-space);
+}
+
+@utility hairline {
+  border-color: var(--color-rule);
+}
+
+/* ----------------------------------------------------------------------------
+   Typography — an editorial scale, not "big everywhere"
+---------------------------------------------------------------------------- */
+
+@utility type-display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2.5rem, 1.45rem + 4.4vw, 5.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+
+@utility type-h1 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2.15rem, 1.4rem + 2.9vw, 4.1rem);
+  line-height: 1.06;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+}
+
+@utility type-h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 1.35rem + 2.2vw, 3.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+@utility type-h3 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 1.2rem + 0.8vw, 2rem);
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+@utility type-h4 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+@utility type-lead {
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.6;
+  letter-spacing: 0.002em;
+  text-wrap: pretty;
+}
+
+@utility type-body {
+  font-size: 1rem;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+@utility type-small {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+@utility type-label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Warm light from above, as on a sunlit table — the ground for product-led
+   compositions. */
+@utility bg-sun {
+  background:
+    linear-gradient(180deg, transparent 72%, var(--color-ivory) 100%),
+    radial-gradient(ellipse 70% 55% at 62% 18%, rgb(197 161 90 / 0.22), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 10% 90%, rgb(92 120 61 / 0.08), transparent 70%),
+    var(--color-ivory);
+}
+
+/* A soft, raised card — white-warm, used for floating notes and product cards. */
+@utility card-float {
+  background: rgb(253 251 245 / 0.92);
+  border: 1px solid rgb(24 32 25 / 0.06);
+  box-shadow:
+    0 1px 2px rgb(24 32 25 / 0.04),
+    0 18px 40px -18px rgb(24 32 25 / 0.22);
+}
+
+@utility type-nav {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@utility type-caption {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* ----------------------------------------------------------------------------
+   Interface
+---------------------------------------------------------------------------- */
+
+@utility link-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  padding-bottom: 0.2rem;
+  transition: background-size 0.5s var(--ease-organic);
+  &:hover,
+  &:focus-visible {
+    background-size: 100% 1px;
+  }
+}
+
+/* Images that ease into place once loaded (paired with blur placeholders). */
+@utility media-frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-parchment);
+  /* Inherits a botanical shape (leaf-plate, leaflet…) from its wrapper. */
+  border-radius: var(--frame-radius, 2px);
+}
+
+/* ----------------------------------------------------------------------------
+   Motion — reduced motion disables all animation and transition.
+---------------------------------------------------------------------------- */
+
+/* Native <dialog> drawers: slide (cart) or fade (navigation) in and out. */
+.drawer {
+  opacity: 0;
+  transform: translateX(100%);
+  transition:
+    transform 0.7s var(--ease-cinematic),
+    opacity 0.5s var(--ease-organic),
+    overlay 0.7s allow-discrete,
+    display 0.7s allow-discrete;
+}
+.drawer[open] {
+  opacity: 1;
+  transform: none;
+}
+@starting-style {
+  .drawer[open] {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+.drawer[data-surface="dark"] {
+  transform: none;
+}
+@starting-style {
+  .drawer[data-surface="dark"][open] {
+    transform: none;
+  }
+}
+.drawer::backdrop {
+  opacity: 0;
+  transition:
+    opacity 0.5s var(--ease-organic),
+    overlay 0.5s allow-discrete,
+    display 0.5s allow-discrete;
+}
+.drawer[open]::backdrop {
+  opacity: 1;
+}
+@starting-style {
+  .drawer[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@keyframes scroll-cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+@utility animate-scroll-cue {
+  animation: scroll-cue 2.8s var(--ease-cinematic) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Scroll motion (no animation library)
+
+   - `data-reveal` elements are hidden only when scripting is available and the
+     reader allows motion; `MotionRoot` adds `data-revealed` on entry.
+   - Scroll-linked elements receive `--progress` (0–1) from one rAF loop
+     (`src/lib/motion/scrollProgress.ts`); CSS turns it into transforms.
+---------------------------------------------------------------------------- */
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal="fade"] {
+    transition:
+      opacity 1.4s var(--ease-organic),
+      transform 1.4s var(--ease-organic);
+  }
+  [data-reveal="fade"]:not([data-revealed]) {
+    opacity: 0;
+    transform: translate3d(0, 1.75rem, 0);
+  }
+
+  [data-reveal="stagger"] > * {
+    transition:
+      opacity 1.2s var(--ease-organic),
+      transform 1.2s var(--ease-organic);
+  }
+  [data-reveal="stagger"] > :nth-child(2) {
+    transition-delay: 0.12s;
+  }
+  [data-reveal="stagger"] > :nth-child(3) {
+    transition-delay: 0.24s;
+  }
+  [data-reveal="stagger"] > :nth-child(n + 4) {
+    transition-delay: 0.36s;
+  }
+  [data-reveal="stagger"]:not([data-revealed]) > * {
+    opacity: 0;
+    transform: translate3d(0, 1.5rem, 0);
+  }
+
+  [data-reveal="image"] {
+    transition: clip-path 1.8s var(--ease-cinematic);
+  }
+  [data-reveal="image"] img {
+    transition: transform 2.2s var(--ease-organic);
+  }
+  [data-reveal="image"]:not([data-revealed]) {
+    clip-path: inset(14% 0% 0% 0%);
+  }
+  [data-reveal="image"]:not([data-revealed]) img {
+    transform: scale(1.12);
+  }
+
+  [data-reveal="heading"] .reveal-line > span {
+    transition: transform 1.5s var(--ease-cinematic);
+    transition-delay: calc(var(--line, 0) * 90ms);
+  }
+  [data-reveal="heading"]:not([data-revealed]) .reveal-line > span {
+    transform: translate3d(0, 105%, 0);
+  }
+
+  [data-parallax-target] {
+    transform: translate3d(
+      0,
+      calc((var(--progress, 0.5) - 0.5) * 2 * var(--parallax, 0.1) * 100%),
+      0
+    );
+    will-change: transform;
+  }
+
+  /* Hero: the window onto the farm opens from its base, the pouch rises into
+     place in front of it; then, as the reader leaves, the pouch lifts and the
+     landscape drifts more slowly behind (three depths, three rates). */
+  .hero-window {
+    animation: window-open 2.2s var(--ease-cinematic) 0.15s both;
+  }
+  .hero-window__image {
+    animation: hero-settle 3.2s var(--ease-organic) both;
+    translate: 0 calc(var(--progress, 0) * 12%);
+  }
+  .hero-pouch {
+    animation: pouch-rise 1.9s var(--ease-organic) 0.75s both;
+    translate: 0 calc(var(--progress, 0) * -10%);
+    scale: calc(1 + var(--progress, 0) * 0.05);
+    transform-origin: 50% 100%;
+  }
+  .hero-copy {
+    transform: translate3d(0, calc(var(--progress, 0) * -14%), 0);
+    opacity: calc(1 - var(--progress, 0) * 0.7);
+  }
+  .hero-line > span {
+    animation: line-rise 1.8s var(--ease-cinematic) both;
+    animation-delay: calc(0.35s + var(--line, 0) * 0.14s);
+  }
+  .hero-fade {
+    animation: soft-rise 1.6s var(--ease-organic) both;
+    animation-delay: calc(0.9s + var(--line, 0) * 0.12s);
+  }
+
+  /* The leaf plate: the camera eases closer as the section is read. */
+  .leaf-zoom-frame {
+    /* Keeps the leaf plate's curved shoulders while the frame opens. */
+    clip-path: inset(
+      calc((1 - min(1, var(--progress, 1) * 2)) * 8%)
+        calc((1 - min(1, var(--progress, 1) * 2)) * 6%) round var(--frame-radius, 0)
+    );
+  }
+  .leaf-zoom-media {
+    transform: scale(calc(1.02 + var(--progress, 0) * 0.43));
+  }
+}
+
+@keyframes hero-settle {
+  from {
+    transform: scale(1.14);
+  }
+  to {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes window-open {
+  from {
+    clip-path: inset(38% 0 0 30% round var(--frame-radius, 0));
+  }
+  to {
+    clip-path: inset(0 0 0 0 round var(--frame-radius, 0));
+  }
+}
+
+@keyframes pouch-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 9%, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes line-rise {
+  from {
+    transform: translate3d(0, 110%, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes soft-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Line masks used by server-split headings. */
+.reveal-line,
+.hero-line {
+  display: block;
+  overflow: clip;
+  padding-bottom: 0.06em;
+  margin-bottom: -0.06em;
+}
+.reveal-line > span,
+.hero-line > span {
+  display: block;
 }

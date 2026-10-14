@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# test output
+test-results
+playwright-report
+coverage
+
+# order requests saved by the server file store (contains customer details)
+/.data/
