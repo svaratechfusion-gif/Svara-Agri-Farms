@@ -48,7 +48,8 @@ describe("validateDelivery", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(Object.keys(result.errors).sort()).toEqual(
-      ["addressLine1", "city", "fullName", "locality", "phone", "pinCode", "state"].sort(),
+      // Address line 2, locality, email and instructions are optional.
+      ["addressLine1", "city", "fullName", "phone", "pinCode", "state"].sort(),
     );
     expect(result.errors.fullName).toMatch(/enter your full name/i);
   });

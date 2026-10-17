@@ -12,7 +12,7 @@ const moringa = products.find((product) => product.slug === "moringa-powder")!;
 describe("SVARA's script", () => {
   it("opens with the first-visit greeting and the three main quick replies", () => {
     expect(SCRIPT.hello.text).toBe(
-      "Hey there! 🌱 I'm SVARA, your little guide to SVARA Farms. Ready to explore something natural?",
+      "Hey there! 🌱 I'm SVARA, your little guide to SVARA Agri Farms. Ready to explore something natural?",
     );
     expect(SCRIPT.hello.replies.map((id) => QUICK_REPLIES[id].label)).toEqual([
       "Explore the farm",

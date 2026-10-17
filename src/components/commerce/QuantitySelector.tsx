@@ -15,7 +15,7 @@ export function QuantitySelector({
   label,
   size = "regular",
 }: QuantitySelectorProps) {
-  const height = size === "compact" ? "h-10" : "h-12";
+  const height = size === "compact" ? "h-11" : "h-12";
   const buttonClass = `flex ${height} w-12 items-center justify-center text-lg text-ink transition-colors hover:bg-ivory-deep disabled:cursor-not-allowed disabled:text-ink/30`;
   return (
     <div

@@ -8,7 +8,7 @@ import { buildMetadata } from "@/lib/seo";
 export const metadata: Metadata = {
   ...buildMetadata({
     title: "Your cart",
-    description: "Review the SVARA Farms products in your cart.",
+    description: "Review the SVARA Agri Farms products in your cart.",
     path: "/cart",
   }),
   robots: { index: false, follow: false },

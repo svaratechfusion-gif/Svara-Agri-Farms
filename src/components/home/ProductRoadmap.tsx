@@ -86,7 +86,7 @@ function MilestoneScene({ milestone }: { milestone: Milestone }) {
  * the vein is fully drawn.
  */
 export function ProductRoadmap({ roadmap }: { roadmap: Roadmap }) {
-  const { featured, milestones } = roadmap;
+  const { featured, milestones, widerOrderable } = roadmap;
   const rootRef = useRef<HTMLDivElement>(null);
   const routeRef = useRef<HTMLDivElement>(null);
   const active = useRef<HTMLElement | null>(null);
@@ -224,10 +224,12 @@ export function ProductRoadmap({ roadmap }: { roadmap: Roadmap }) {
       <div className="roadmap-intro">
         <p className="type-label text-earth-ink">The wider range</p>
         <h3 id="range-preview-heading" className="mt-3 type-h2 text-forest">
-          Also in preparation.
+          {widerOrderable ? "Also in the range." : "Also in preparation."}
         </h3>
         <p className="mt-4 type-small text-ink-soft">
-          Packs we are preparing. Sizes, prices and availability will be shared when they are ready.
+          {widerOrderable
+            ? "Each pack can be ordered from the shop — choose a size and add it to your cart."
+            : "Packs we are preparing. Sizes, prices and availability will be shared when they are ready."}
         </p>
         <LeafLink href="/products" className="mt-5">
           All products

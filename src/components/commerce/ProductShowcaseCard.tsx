@@ -4,8 +4,12 @@ import Link from "next/link";
 import { CutoutImage } from "@/components/botanical/CutoutImage";
 import { LeafButton, LeafLink } from "@/components/ui/LeafButton";
 import { photos } from "@/content/photos";
-import { AVAILABILITY_LABEL } from "@/lib/commerce/availability";
-import type { Product } from "@/lib/commerce/types";
+import {
+  AVAILABILITY_LABEL,
+  productAvailability,
+  sizeAvailability,
+} from "@/lib/commerce/availability";
+import type { FeaturedProduct } from "@/lib/commerce/types";
 
 /** The leaf in its three forms, as small leaflet-framed thumbnails. */
 function IngredientStrip() {
@@ -26,7 +30,7 @@ function IngredientStrip() {
 }
 
 interface ProductShowcaseCardProps {
-  product: Product;
+  product: FeaturedProduct;
   headingLevel?: "h2" | "h3";
   preload?: boolean;
 }
@@ -44,7 +48,7 @@ export function ProductShowcaseCard({
 }: ProductShowcaseCardProps) {
   const Heading = headingLevel;
   const href = `/products/${product.slug}`;
-  const availability = AVAILABILITY_LABEL[product.variants[0].availability];
+  const availability = AVAILABILITY_LABEL[productAvailability(product)];
   return (
     <article className="showcase-card relative mt-24 grid overflow-visible leaf-plate card-float lg:mt-32 lg:grid-cols-[1.05fr_1fr]">
       <div className="relative h-[19rem] xs:h-[22rem] sm:h-[30rem] lg:h-auto lg:min-h-[34rem]">
@@ -109,7 +113,7 @@ export function ProductShowcaseCard({
               <dd className="mt-1 type-small text-ink-soft">
                 {variant.isProvisional
                   ? "Size to be confirmed"
-                  : AVAILABILITY_LABEL[variant.availability]}
+                  : AVAILABILITY_LABEL[sizeAvailability(product, variant)]}
               </dd>
             </div>
           ))}

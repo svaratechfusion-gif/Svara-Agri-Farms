@@ -28,14 +28,19 @@ import {
 } from "@/lib/mascot/welcome";
 
 import { MascotChat } from "./MascotChat";
+import { WhatsAppLink } from "@/components/ui/WhatsAppLink";
+import { generalEnquiry } from "@/lib/contact/whatsapp";
+
 import { SvaraMascot } from "./SvaraMascot";
 import { useMascotMotion } from "./useMascotMotion";
 import { useSectionNotes } from "./useSectionNotes";
 
 /** Routes whose purchase controls the companion must never cover on small screens. */
-const PURCHASE_ROUTES = ["/shop", "/products/"];
-/** The cart and the order request: forms and quantities throughout, so SVARA stays out at every size. */
-const QUIET_ROUTES = ["/cart", "/checkout"];
+const PURCHASE_ROUTES = ["/shop", "/products/", "/order"];
+/** The cart: quantities and the WhatsApp order throughout, so SVARA stays out at every size. */
+const QUIET_ROUTES = ["/cart"];
+/** The corner SVARA lives in, as an IntersectionObserver root margin (bottom 22%, right 12%). */
+const MASCOT_CORNER = "-78% 0px 0px -88%";
 
 /** After this long with no activity on the page, SVARA dozes (while the panel is closed). */
 const SLEEP_AFTER_MS = 60_000;
@@ -202,7 +207,29 @@ export function MascotCompanion() {
     zones.forEach((zone) => observer.observe(zone));
     return () => observer.disconnect();
   }, [pathname]);
-  const stepAside = small && clearZone.pathname === pathname && clearZone.inView;
+  // Controls a customer must reach (`data-mascot-avoid`, e.g. size and Add to
+  // cart): while one is inside SVARA's own corner, SVARA steps aside at every
+  // size. The observer's root is shrunk to that bottom-right corner.
+  const [inCorner, setInCorner] = useState({ pathname: "", inView: false });
+  useEffect(() => {
+    const controls = document.querySelectorAll("[data-mascot-avoid]");
+    if (controls.length === 0) return;
+    const visible = new Set<Element>();
+    const observer = new IntersectionObserver(
+      (records) => {
+        records.forEach((record) =>
+          record.isIntersecting ? visible.add(record.target) : visible.delete(record.target),
+        );
+        setInCorner({ pathname, inView: visible.size > 0 });
+      },
+      { rootMargin: MASCOT_CORNER },
+    );
+    controls.forEach((control) => observer.observe(control));
+    return () => observer.disconnect();
+  }, [pathname]);
+  const asideForControls = inCorner.pathname === pathname && inCorner.inView;
+  const stepAside =
+    (small && clearZone.pathname === pathname && clearZone.inView) || asideForControls;
 
   const hideOnSmall = PURCHASE_ROUTES.some((route) => pathname.startsWith(route));
   const quietHere = QUIET_ROUTES.some((route) => pathname.startsWith(route));
@@ -365,12 +392,14 @@ export function MascotCompanion() {
   };
   const rest = () => toRest("listening");
 
+  // Kept outside the className literal (Prettier's class sorter drops leading spaces).
+  const asideClass = asideForControls && !open ? "mascot-companion--aside" : "";
   return (
     <div
       ref={rootRef}
       className={`mascot-companion fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex flex-col items-end gap-3 ${
         quietHere ? "hidden" : hideOnSmall ? "max-lg:hidden" : ""
-      } ${(!pastHero || stepAside) && !open ? "mascot-companion--away" : ""}`}
+      } ${(!pastHero || stepAside) && !open ? "mascot-companion--away" : ""} ${asideClass}`}
     >
       {open && (
         <div
@@ -386,7 +415,7 @@ export function MascotCompanion() {
         >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="type-label text-earth-ink">The SVARA Farms companion</p>
+              <p className="type-label text-earth-ink">The SVARA Agri Farms companion</p>
               <h2 id={headingId} className="mt-1 type-h3 text-forest">
                 Hello, I&rsquo;m SVARA.
               </h2>
@@ -413,6 +442,9 @@ export function MascotCompanion() {
             onSay={(text) => talk({ type: "say", text })}
             onNavigate={leaveChat}
           />
+          <div className="mt-4 border-t border-[color:var(--vein)] pt-3">
+            <WhatsAppLink message={generalEnquiry()}>Chat with our team on WhatsApp</WhatsAppLink>
+          </div>
         </div>
       )}
 
@@ -466,7 +498,7 @@ export function MascotCompanion() {
       >
         <SvaraMascot state={state} size={52} decorative onStateEnd={handleStateEnd} />
         <span className="sr-only">
-          {open ? "Close SVARA" : "Open SVARA, the SVARA Farms companion"}
+          {open ? "Close SVARA" : "Open SVARA, the SVARA Agri Farms companion"}
         </span>
       </button>
     </div>

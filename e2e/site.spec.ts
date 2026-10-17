@@ -51,15 +51,15 @@ test("home page carries canonical, Open Graph and structured data", async ({ pag
 
 test("the official logo is used in the header", async ({ page }) => {
   await page.goto("/");
-  // The home link is named "SVARA Farms — home"; the seal inside it is decorative.
-  const logo = page.locator("header a[aria-label^='SVARA Farms'] img").first();
+  // The home link is named "SVARA Agri Farms — home"; the seal inside it is decorative.
+  const logo = page.locator("header a[aria-label^='SVARA Agri Farms'] img").first();
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute("src", /svara-farms-logo/);
 });
 
 test("the seal sits at the true centre of the header and is enlarged", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
-  const seal = page.locator("header a[aria-label^='SVARA Farms'] > span");
+  const seal = page.locator("header a[aria-label^='SVARA Agri Farms'] > span");
   const box = await seal.boundingBox();
   const width = page.viewportSize()?.width ?? 0;
   expect(box).not.toBeNull();
@@ -75,7 +75,7 @@ test("the seal sits at the true centre of the header and is enlarged", async ({ 
 
 test("actions share the leaf silhouette", async ({ page }) => {
   await page.goto("/products/moringa-powder", { waitUntil: "networkidle" });
-  const addToCart = page.getByRole("button", { name: "Add to cart" });
+  const addToCart = page.getByRole("button", { name: "Add to cart" }).first();
   await expect(addToCart).toHaveClass(/leaf-btn--primary/);
   const radii = await addToCart.evaluate((element) => {
     const style = getComputedStyle(element);
@@ -109,7 +109,8 @@ test("adding to the cart updates the count and opens the drawer", async ({ page 
   test.skip(!orderable, NOTHING_ORDERABLE);
   const { product, variant } = orderable!;
   await page.goto(`/products/${product.slug}`, { waitUntil: "networkidle" });
-  const purchase = page.locator("form").filter({ hasText: "Add to cart" });
+  // The product's own form (the wider range below has its own).
+  const purchase = page.locator("form").filter({ hasText: "Add to cart" }).first();
 
   await purchase.getByRole("radio", { name: new RegExp(variant.label) }).check({ force: true });
   await purchase.getByRole("button", { name: "Increase quantity" }).click();
@@ -125,7 +126,7 @@ test("adding to the cart updates the count and opens the drawer", async ({ page 
   const drawer = page.getByRole("dialog", { name: "Your cart" });
   await expect(drawer).toBeVisible();
   await expect(drawer).toContainText(variant.label);
-  await expect(drawer.getByRole("link", { name: "Review cart & order" })).toBeVisible();
+  await expect(drawer.getByRole("link", { name: "Review your order" })).toBeVisible();
 
   await page.keyboard.press("Escape");
   await expect(drawer).toBeHidden();
@@ -232,7 +233,7 @@ test("the product-led spread centres the whole cream pouch", async ({ page }) =>
   expect(pouchBox!.y).toBeGreaterThanOrEqual(stageBox!.y - 1);
   expect(pouchBox!.y + pouchBox!.height).toBeLessThanOrEqual(stageBox!.y + stageBox!.height + 1);
   const section = page.locator("section", { has: page.locator("#ritual-heading") });
-  await expect(section.getByText("To be confirmed")).toBeVisible();
+  await expect(section.getByText("100 g pouch · 250 g pouch")).toBeVisible();
 });
 
 test("the ingredient and green chapters render their supplied images", async ({ page }) => {
@@ -273,14 +274,15 @@ test("the products page shows the uncropped cream pouch", async ({ page }) => {
   await expect(pouch).toHaveCSS("object-fit", "contain");
 });
 
-test("the wider range previews each pack with its own ingredient and no price", async ({
+test("the wider range sells each pack, in both sizes, at the catalogue's prices", async ({
   page,
 }) => {
   await page.goto("/products", { waitUntil: "networkidle" });
-  const grid = page.getByRole("list", { name: "Also in preparation." });
+  const grid = page.getByRole("list", { name: "Also in the range." });
   await grid.scrollIntoViewIfNeeded();
-  await expect(grid.getByRole("listitem")).toHaveCount(11);
-  for (const name of [
+  const cards = grid.getByRole("listitem");
+  await expect(cards).toHaveCount(11);
+  for (const [index, name] of [
     "Beetroot",
     "Carrot",
     "Apple",
@@ -292,14 +294,21 @@ test("the wider range previews each pack with its own ingredient and no price", 
     "Hibiscus Leaf",
     "Hibiscus Flower",
     "Amla",
-  ]) {
+  ].entries()) {
+    const card = cards.nth(index);
     await expect(
-      grid.getByRole("img", { name: new RegExp(`SVARA ${name} Powder pouch`) }),
+      card.getByRole("img", { name: new RegExp(`SVARA ${name} Powder pouch`) }),
     ).toBeAttached();
+    await expect(card.getByText("Available", { exact: true })).toBeVisible();
+    await expect(card.getByRole("radio", { name: /100 g.*₹250/ })).toBeAttached();
+    await expect(card.getByRole("radio", { name: /250 g.*₹350/ })).toBeAttached();
+    await expect(card.getByRole("button", { name: "Add to cart" })).toBeEnabled();
+    await expect(card.getByRole("link", { name: /Ask on WhatsApp/ })).toHaveAttribute(
+      "href",
+      /^https:\/\/wa\.me\/917780262442\?text=/,
+    );
   }
-  await expect(grid.getByText("In preparation")).toHaveCount(11);
-  await expect(grid.getByRole("button")).toHaveCount(0);
-  await expect(grid.getByText(/₹|price/i)).toHaveCount(0);
+  await expect(grid.getByText(/In preparation|Coming soon|Price to be announced/)).toHaveCount(0);
 });
 
 test("each journey stage carries its own process icon", async ({ page }) => {
@@ -350,14 +359,43 @@ test("journey frames cut in with their own scene and stay in step", async ({ pag
   );
 });
 
-test("the shop separates what can be ordered from what is in preparation", async ({ page }) => {
+test("the shop's section row belongs to the page and never covers the products", async ({
+  page,
+}) => {
   await page.goto("/shop", { waitUntil: "networkidle" });
   const sections = page.getByRole("navigation", { name: "Shop sections" });
-  await sections.getByRole("link", { name: /In preparation/ }).click();
+  await expect(sections).toContainText("12 available to order");
+  // In the flow of the page: never sticky or fixed over the content below.
+  expect(await sections.evaluate((nav) => getComputedStyle(nav).position)).toBe("static");
+
+  // Scroll the purchase controls to the top of the screen, where the old row used to float.
+  const purchase = page.locator("#available form").filter({ hasText: "Add to cart" }).first();
+  for (const target of [
+    page.locator("#available").getByRole("heading", { level: 2 }).first(),
+    purchase.getByRole("radio").first(),
+    purchase.getByRole("button", { name: "Add to cart" }),
+    purchase.getByRole("button", { name: "Buy now" }),
+  ]) {
+    await target.evaluate((element) => element.scrollIntoView({ block: "start" }));
+    await page.waitForTimeout(150);
+    const nav = await sections.boundingBox();
+    const box = await target.boundingBox();
+    const overlaps =
+      nav !== null &&
+      box !== null &&
+      nav.y < box.y + box.height &&
+      box.y < nav.y + nav.height &&
+      nav.x < box.x + box.width &&
+      box.x < nav.x + nav.width;
+    expect(overlaps).toBe(false);
+  }
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await sections.getByRole("link", { name: /The wider range/ }).click();
   await expect(page).toHaveURL(/#in-preparation$/);
-  const preparation = page.locator("#in-preparation");
-  await expect(preparation.getByRole("listitem")).toHaveCount(11);
-  await expect(preparation.getByRole("button")).toHaveCount(0);
+  const range = page.locator("#in-preparation");
+  await expect(range.getByRole("listitem")).toHaveCount(11);
+  await expect(range.getByRole("button", { name: "Add to cart" })).toHaveCount(11);
   await expect(
     page.locator("#available").getByRole("button", { name: /Add to cart/ }),
   ).toBeVisible();
@@ -380,7 +418,7 @@ test("the product page tells how it is made, in six stages", async ({ page }) =>
   await sequence.scrollIntoViewIfNeeded();
   await expect(sequence.getByRole("listitem")).toHaveCount(6);
   await expect(sequence.getByRole("heading", { name: "Shade Dry" })).toBeVisible();
-  await expect(page.getByRole("list", { name: "Also in preparation." })).toBeAttached();
+  await expect(page.getByRole("list", { name: "Also in the range." })).toBeAttached();
 });
 
 test("chapter doors lead from page to page", async ({ page }) => {
@@ -415,7 +453,7 @@ test("our story tells its chapters in their own compositions", async ({ page }) 
     await expect(page.getByRole("heading", { name }).first()).toBeAttached();
   }
   // Every pack is listed; phones show four of them to keep the pouch clear.
-  await expect(page.locator('ul[aria-label="Packs in preparation"] > li')).toHaveCount(11);
+  await expect(page.locator('ul[aria-label="The wider range"] > li')).toHaveCount(11);
   await expect(page.locator(".expanding-scene img")).toHaveCount(1);
 });
 
@@ -468,6 +506,7 @@ test("SVARA celebrates a real add to cart", async ({ page }) => {
   await page
     .locator("form")
     .filter({ hasText: "Add to cart" })
+    .first()
     .getByRole("button", { name: "Add to cart" })
     .click();
   await expect(mascot).toHaveAttribute("data-state", "excited");

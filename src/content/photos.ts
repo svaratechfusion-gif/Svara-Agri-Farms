@@ -131,9 +131,9 @@ export const photos = {
     alt: "A mound of fine green moringa powder on dark stone with a copper spoon.",
   },
   /**
-   * The SVARA pouch (cream packaging — the chosen direction). The supplied
-   * artwork is unaltered, placed on a warm ivory ground with a contact shadow.
-   * Its printed claims are not repeated in site copy (README → Before launch).
+   * The SVARA pouch (cream packaging — the chosen direction) on a warm ivory
+   * ground, retouched like the cutout (no net weight, no claim icons). The
+   * seal's claims are not repeated in site copy (README → Before launch).
    */
   productPouch: {
     src: productPouch,

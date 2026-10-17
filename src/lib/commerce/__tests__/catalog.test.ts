@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { findProductSync, findVariant, isPurchasable, localProductRepository } from "../catalog";
-import { isPaid, PAYMENT_PROVIDER } from "../payment";
+import type { Availability, Product, ProductVariant } from "../types";
+import { fixtureCatalogue } from "./fixtures";
 
 describe("localProductRepository", () => {
   it("lists products and finds one by slug", async () => {
@@ -26,19 +27,28 @@ describe("findProductSync / findVariant", () => {
 });
 
 describe("isPurchasable", () => {
-  const base = { id: "v", label: "v", isProvisional: false } as const;
-
-  it("requires both a price and availability", () => {
-    const price = { amountMinor: 100, currency: "INR" as const };
-    expect(isPurchasable({ ...base, price, availability: "available" })).toBe(true);
-    expect(isPurchasable({ ...base, price: null, availability: "available" })).toBe(false);
-    expect(isPurchasable({ ...base, price, availability: "coming-soon" })).toBe(false);
+  const price = { amountMinor: 100, currency: "INR" as const };
+  const size = (overrides: Partial<ProductVariant>): ProductVariant => ({
+    ...fixtureCatalogue[0].variants[0],
+    ...overrides,
   });
-});
+  const product = (availability: Availability): Product => ({
+    ...fixtureCatalogue[0],
+    availability,
+  });
 
-describe("payment", () => {
-  it("is not connected, and a request is never treated as paid", () => {
-    expect(PAYMENT_PROVIDER).toBeNull();
-    expect(isPaid({ payment: { status: "not-collected" } })).toBe(false);
+  it("requires a price and availability, for the size and the product", () => {
+    expect(isPurchasable(product("available"), size({ price, availability: "available" }))).toBe(
+      true,
+    );
+    expect(
+      isPurchasable(product("available"), size({ price: null, availability: "available" })),
+    ).toBe(false);
+    expect(isPurchasable(product("available"), size({ price, availability: "coming-soon" }))).toBe(
+      false,
+    );
+    for (const state of ["coming-soon", "in-preparation", "sold-out"] as const) {
+      expect(isPurchasable(product(state), size({ price, availability: "available" }))).toBe(false);
+    }
   });
 });

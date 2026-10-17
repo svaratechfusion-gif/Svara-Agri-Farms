@@ -84,7 +84,7 @@ export function Philosophy({ index = "02", total = "11" }: { index?: string; tot
         </div>
 
         <Folio
-          title="SVARA Farms · The story of a leaf"
+          title="SVARA Agri Farms · The story of a leaf"
           marker={`Chapter ${index} of ${total}`}
           className="mt-20 lg:mt-28"
         />

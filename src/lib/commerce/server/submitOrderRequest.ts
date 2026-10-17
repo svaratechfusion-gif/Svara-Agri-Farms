@@ -1,4 +1,5 @@
 import type { DeliveryErrors } from "../delivery";
+import { notificationsFor, sendNotifications, type OrderNotifier } from "../notifications";
 import type { CartIssue } from "../orderLines";
 import {
   buildOrderRequest,
@@ -6,7 +7,8 @@ import {
   parseOrderRequestInput,
   type OrderRequest,
 } from "../orderRequest";
-import type { Product } from "../types";
+import type { CommerceRules } from "../pricing";
+import type { Money, Product } from "../types";
 
 import { DuplicateSubmission, ReferenceTaken, type OrderRequestStore } from "./orderRequestStore";
 
@@ -17,11 +19,23 @@ import { DuplicateSubmission, ReferenceTaken, type OrderRequestStore } from "./o
  */
 
 export type SubmitError =
-  "not-accepting" | "invalid-request" | "invalid-delivery" | "unavailable-items" | "save-failed";
+  | "not-accepting"
+  | "invalid-request"
+  | "invalid-delivery"
+  | "unavailable-items"
+  | "price-changed"
+  | "below-minimum"
+  | "save-failed";
 
 export type SubmitBody =
   | { ok: true; order: OrderRequest }
-  | { ok: false; error: SubmitError; errors?: DeliveryErrors; issues?: CartIssue[] };
+  | {
+      ok: false;
+      error: SubmitError;
+      errors?: DeliveryErrors;
+      issues?: CartIssue[];
+      minimum?: Money;
+    };
 
 export interface SubmitResult {
   status: number;
@@ -30,7 +44,11 @@ export interface SubmitResult {
 
 export interface SubmitDeps {
   catalogue: readonly Product[];
+  /** Delivery, tax and minimum-order rules (`content/commerce.ts`). */
+  rules: CommerceRules;
   store: OrderRequestStore | null;
+  /** Sends order notifications after a save; null when none is connected. */
+  notifier: OrderNotifier | null;
   now: () => Date;
   randomBytes: (size: number) => Uint8Array;
   /** Server-side log for failures (never the customer's details). */
@@ -72,16 +90,25 @@ export async function submitOrderRequest(
       deps.catalogue,
       createOrderReference(now, deps.randomBytes(6)),
       now,
+      deps.rules,
     );
     if (!built.ok) {
       if (built.reason === "invalid-delivery")
         return fail(422, "invalid-delivery", { errors: built.errors });
-      if (built.reason === "unavailable-items")
-        return fail(409, "unavailable-items", { issues: built.issues });
+      if (built.reason === "unavailable-items" || built.reason === "price-changed")
+        return fail(409, built.reason, { issues: built.issues });
+      if (built.reason === "below-minimum")
+        return fail(409, "below-minimum", { minimum: built.minimum });
       return fail(400, "invalid-request");
     }
     try {
       await deps.store.save(built.order, idempotencyKey);
+      // Only a new save notifies; a replayed submission above does not.
+      await sendNotifications(
+        deps.notifier,
+        notificationsFor(built.order.status, built.order),
+        deps.logError,
+      );
       return { status: 201, body: { ok: true, order: built.order } };
     } catch (error) {
       if (error instanceof ReferenceTaken) continue;

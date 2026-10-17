@@ -6,7 +6,7 @@ import { ProductPurchase } from "@/components/commerce/ProductPurchase";
 import { EditorialImage } from "@/components/editorial/EditorialImage";
 import { IngredientFlowDivider } from "@/components/botanical/IngredientFlowDivider";
 import { flowPlacements } from "@/content/ingredientFlows";
-import { RangeGrid } from "@/components/commerce/RangeGrid";
+import { RangeGrid, rangeProducts } from "@/components/commerce/RangeGrid";
 import { Ingredient } from "@/components/home/Ingredient";
 import { ProcessSequence } from "@/components/journey/ProcessSequence";
 
@@ -18,8 +18,8 @@ import { NextChapter } from "@/components/page/NextChapter";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { photos } from "@/content/photos";
 import { site } from "@/content/site";
-import { localProductRepository } from "@/lib/commerce/catalog";
-import type { Product } from "@/lib/commerce/types";
+import { isPurchasable, localProductRepository } from "@/lib/commerce/catalog";
+import type { FeaturedProduct } from "@/lib/commerce/types";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { MotionRoot } from "@/components/motion/MotionRoot";
 
@@ -28,7 +28,7 @@ const MONOGRAPH_LETTERS = ["A", "B", "C", "D"] as const;
 const DETAIL_TAGS: Record<string, readonly string[]> = {
   ingredient: ["Moringa oleifera", "Grown on our farm"],
   process: ["Hand harvested", "Shade dried", "Milled"],
-  pack: ["SVARA Farms mark", "Reseal after opening"],
+  pack: ["SVARA mark", "Reseal after opening"],
 };
 
 /**
@@ -57,20 +57,19 @@ export async function generateMetadata({
   });
 }
 
-function productStructuredData(product: Product) {
+function productStructuredData(product: FeaturedProduct) {
   const path = `/products/${product.slug}`;
   const offers = product.variants.flatMap((variant) =>
     variant.price
       ? [
           {
             "@type": "Offer",
-            sku: variant.id,
+            sku: variant.sku,
             price: (variant.price.amountMinor / 100).toFixed(2),
             priceCurrency: variant.price.currency,
-            availability:
-              variant.availability === "available"
-                ? "https://schema.org/InStock"
-                : "https://schema.org/OutOfStock",
+            availability: isPurchasable(product, variant)
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
           },
         ]
       : [],
@@ -100,6 +99,9 @@ function productStructuredData(product: Product) {
 }
 
 export default async function ProductPage({ params }: PageProps<"/products/[slug]">) {
+  const widerOrderable = rangeProducts.some((item) =>
+    item.variants.some((variant) => isPurchasable(item, variant)),
+  );
   const { slug } = await params;
   const product = await localProductRepository.findBySlug(slug);
   if (!product) notFound();
@@ -246,11 +248,15 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
         <div className="container-page">
           <SectionHeader label="The wider range" />
           <h2 id="related-heading" className="mt-5 type-h1 text-forest">
-            Also in <em className="text-botanical italic">preparation.</em>
+            Also in{" "}
+            <em className="text-botanical italic">
+              {widerOrderable ? "the range." : "preparation."}
+            </em>
           </h2>
           <p className="mt-5 max-w-xl type-body text-ink-soft">
-            Packs we are preparing. Sizes, prices and availability will be shared when they are
-            ready.
+            {widerOrderable
+              ? "Each pack comes in the same sizes as this one. Choose a size and add it to your cart right here."
+              : "Packs we are preparing. Sizes, prices and availability will be shared when they are ready."}
           </p>
           <RangeGrid labelledBy="related-heading" className="mt-12" />
         </div>

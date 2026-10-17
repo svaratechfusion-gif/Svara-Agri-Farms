@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { products } from "@/content/products";
+import { catalogue } from "@/content/products";
 
 import type { DeliveryInput } from "../delivery";
 import {
@@ -13,11 +13,9 @@ import {
   parseOrderRequestInput,
   REFERENCE_PATTERN,
 } from "../orderRequest";
-import {
-  createFileOrderRequestStore,
-  orderRequestStoreFromEnv,
-  type OrderRequestStore,
-} from "../server/orderRequestStore";
+import { orderRequestStoreFromEnv } from "../server/configuredStore";
+import { createFileOrderRequestStore, type OrderRequestStore } from "../server/orderRequestStore";
+import { NO_RULES, type CommerceRules } from "../pricing";
 import { createRateLimiter } from "../server/rateLimit";
 import { submitOrderRequest, type SubmitDeps } from "../server/submitOrderRequest";
 import { fixtureCatalogue } from "./fixtures";
@@ -34,7 +32,8 @@ const delivery: DeliveryInput = {
   pinCode: "516101",
   instructions: "",
 };
-const body = (lines = [{ productSlug: "test-powder", variantId: "test-100g", quantity: 2 }]) => ({
+const LINE_100G = { productSlug: "test-powder", variantId: "test-100g", seenPriceMinor: 24_900 };
+const body = (lines: Record<string, unknown>[] = [{ ...LINE_100G, quantity: 2 }]) => ({
   lines,
   delivery,
 });
@@ -54,24 +53,27 @@ describe("parseOrderRequestInput", () => {
     null,
     "text",
     { lines: [], delivery },
-    { lines: [{ productSlug: "a", variantId: "b", quantity: 0 }], delivery },
-    { lines: [{ productSlug: "a", variantId: "b", quantity: 11 }], delivery },
-    { lines: [{ productSlug: "a", variantId: "b", quantity: 1.5 }], delivery },
-    { lines: [{ productSlug: 1, variantId: "b", quantity: 1 }], delivery },
-    { lines: [{ productSlug: "a", variantId: "b", quantity: 1 }] },
+    { lines: [{ productSlug: "a", variantId: "b", quantity: 0, seenPriceMinor: 100 }], delivery },
+    { lines: [{ productSlug: "a", variantId: "b", quantity: 11, seenPriceMinor: 100 }], delivery },
+    { lines: [{ productSlug: "a", variantId: "b", quantity: 1.5, seenPriceMinor: 100 }], delivery },
+    { lines: [{ productSlug: 1, variantId: "b", quantity: 1, seenPriceMinor: 100 }], delivery },
+    { lines: [{ productSlug: "a", variantId: "b", quantity: 1, seenPriceMinor: 100 }] },
+    // The price the customer was shown is required, and must be a whole number of paise.
+    { lines: [{ productSlug: "a", variantId: "b", quantity: 1 }], delivery },
+    { lines: [{ productSlug: "a", variantId: "b", quantity: 1, seenPriceMinor: 0 }], delivery },
+    { lines: [{ productSlug: "a", variantId: "b", quantity: 1, seenPriceMinor: 9.5 }], delivery },
+    { lines: [{ productSlug: "a", variantId: "b", quantity: 1, seenPriceMinor: "100" }], delivery },
   ])("rejects %j", (input) => {
     expect(parseOrderRequestInput(input)).toBeNull();
   });
 
-  it("ignores anything the client says about prices or totals", () => {
+  it("ignores anything the client says about totals or other prices", () => {
     const parsed = parseOrderRequestInput({
       ...body(),
       subtotal: 1,
-      lines: [{ productSlug: "test-powder", variantId: "test-100g", quantity: 2, price: 1 }],
+      lines: [{ ...LINE_100G, quantity: 2, price: 1 }],
     });
-    expect(parsed?.lines).toEqual([
-      { productSlug: "test-powder", variantId: "test-100g", quantity: 2 },
-    ]);
+    expect(parsed?.lines).toEqual([{ ...LINE_100G, quantity: 2 }]);
   });
 });
 
@@ -82,26 +84,140 @@ describe("buildOrderRequest", () => {
       fixtureCatalogue,
       "SVF-261014-AAAAAA",
       NOW,
+      NO_RULES,
     );
     expect(built.ok).toBe(true);
     if (!built.ok) return;
-    expect(built.order).toMatchObject({
-      status: "pending-confirmation",
-      payment: { status: "not-collected" },
-      productSubtotal: { amountMinor: 49_800, currency: "INR" },
-      lines: [{ productName: "Test Powder", variantLabel: "100 g pouch", quantity: 2 }],
-      delivery: { phone: "+919876543210", pinCode: "516101" },
+    expect(built.order).toEqual({
+      reference: "SVF-261014-AAAAAA",
+      createdAt: NOW.toISOString(),
+      updatedAt: NOW.toISOString(),
+      status: "requested",
+      payment: { status: "not-collected", reference: null },
+      lines: [
+        {
+          productSlug: "test-powder",
+          variantId: "test-100g",
+          sku: "TEST-TEST-100G",
+          productName: "Test Powder",
+          variantLabel: "100 g pouch",
+          quantity: 2,
+          unitPrice: { amountMinor: 24_900, currency: "INR" },
+          lineTotal: { amountMinor: 49_800, currency: "INR" },
+        },
+      ],
+      // No delivery or tax rule is configured: those stay unknown, never zero.
+      totals: {
+        subtotal: { amountMinor: 49_800, currency: "INR" },
+        deliveryCharge: null,
+        tax: null,
+        taxIncluded: false,
+        total: { amountMinor: 49_800, currency: "INR" },
+        isFinal: false,
+      },
+      delivery: expect.objectContaining({ phone: "+919876543210", pinCode: "516101" }),
+      notes: null,
     });
+  });
+
+  it("applies configured delivery, tax and minimum-order rules on the server", () => {
+    const rules: CommerceRules = {
+      deliveryZones: [
+        {
+          id: "ap",
+          label: "Andhra Pradesh",
+          pinCodePrefixes: ["516"],
+          charge: { amountMinor: 5_000, currency: "INR" },
+          freeFrom: null,
+        },
+      ],
+      tax: { label: "GST", rateBasisPoints: 500, pricesIncludeTax: false },
+      minimumOrder: { amountMinor: 30_000, currency: "INR" },
+    };
+    const build = (quantity: number, pinCode = "516101") =>
+      buildOrderRequest(
+        parseOrderRequestInput({
+          lines: [{ ...LINE_100G, quantity }],
+          delivery: { ...delivery, pinCode },
+        })!,
+        fixtureCatalogue,
+        "SVF-261014-AAAAAA",
+        NOW,
+        rules,
+      );
+
+    const priced = build(2);
+    if (!priced.ok) throw new Error("expected success");
+    // 498.00 + 50.00 delivery = 548.00; 5% tax = 27.40; total 575.40.
+    expect(priced.order.totals).toEqual({
+      subtotal: { amountMinor: 49_800, currency: "INR" },
+      deliveryCharge: { amountMinor: 5_000, currency: "INR" },
+      tax: { amountMinor: 2_740, currency: "INR" },
+      taxIncluded: false,
+      total: { amountMinor: 57_540, currency: "INR" },
+      isFinal: true,
+    });
+    expect(build(1)).toEqual({
+      ok: false,
+      reason: "below-minimum",
+      minimum: { amountMinor: 30_000, currency: "INR" },
+    });
+    expect(build(2, "110001")).toEqual({
+      ok: false,
+      reason: "invalid-delivery",
+      errors: { pinCode: "We do not deliver to this PIN code yet." },
+    });
+  });
+
+  it("refuses a size whose product is in preparation, whatever the size says", () => {
+    const built = buildOrderRequest(
+      parseOrderRequestInput(
+        body([
+          {
+            productSlug: "test-later",
+            variantId: "test-later-100g",
+            quantity: 1,
+            seenPriceMinor: 24_900,
+          },
+        ]),
+      )!,
+      fixtureCatalogue,
+      "SVF-261014-AAAAAA",
+      NOW,
+      NO_RULES,
+    );
+    expect(built).toMatchObject({ ok: false, reason: "unavailable-items" });
+  });
+
+  it("refuses unknown products and sizes, and a size under the wrong product", () => {
+    for (const line of [
+      { productSlug: "no-such-powder", variantId: "test-100g" },
+      { productSlug: "test-powder", variantId: "no-such-size" },
+      { productSlug: "test-later", variantId: "test-100g" },
+    ]) {
+      const built = buildOrderRequest(
+        parseOrderRequestInput(body([{ ...line, quantity: 1, seenPriceMinor: 24_900 }]))!,
+        fixtureCatalogue,
+        "SVF-261014-AAAAAA",
+        NOW,
+        NO_RULES,
+      );
+      expect(built).toMatchObject({
+        ok: false,
+        reason: "unavailable-items",
+        issues: [{ reason: "unknown-product" }],
+      });
+    }
   });
 
   it("merges repeated lines, refusing more than the per-line limit", () => {
     const twice = parseOrderRequestInput(
       body([
-        { productSlug: "test-powder", variantId: "test-100g", quantity: 6 },
-        { productSlug: "test-powder", variantId: "test-100g", quantity: 5 },
+        { ...LINE_100G, quantity: 6 },
+        { ...LINE_100G, quantity: 5 },
       ]),
     )!;
-    expect(buildOrderRequest(twice, fixtureCatalogue, "SVF-261014-AAAAAA", NOW)).toEqual({
+    expect(buildOrderRequest(twice, fixtureCatalogue, "SVF-261014-AAAAAA", NOW, NO_RULES)).toEqual({
       ok: false,
       reason: "invalid-request",
     });
@@ -110,28 +226,121 @@ describe("buildOrderRequest", () => {
   it("refuses sizes that cannot be ordered", () => {
     const built = buildOrderRequest(
       parseOrderRequestInput(
-        body([{ productSlug: "test-powder", variantId: "test-soon", quantity: 1 }]),
+        body([
+          { productSlug: "test-powder", variantId: "test-soon", quantity: 1, seenPriceMinor: 100 },
+        ]),
       )!,
       fixtureCatalogue,
       "SVF-261014-AAAAAA",
       NOW,
+      NO_RULES,
     );
     expect(built).toMatchObject({ ok: false, reason: "unavailable-items" });
   });
 
-  it("refuses everything in today's real catalogue, which has no prices yet", () => {
-    for (const product of products) {
-      for (const variant of product.variants) {
-        const built = buildOrderRequest(
-          parseOrderRequestInput(
-            body([{ productSlug: product.slug, variantId: variant.id, quantity: 1 }]),
-          )!,
-          products,
-          "SVF-261014-AAAAAA",
-          NOW,
-        );
-        expect(built.ok).toBe(variant.price !== null && variant.availability === "available");
-      }
+  it("refuses a price the customer was not shown, saying the price changed", () => {
+    const built = buildOrderRequest(
+      parseOrderRequestInput(body([{ ...LINE_100G, quantity: 1, seenPriceMinor: 19_900 }]))!,
+      fixtureCatalogue,
+      "SVF-261014-AAAAAA",
+      NOW,
+      NO_RULES,
+    );
+    expect(built).toEqual({
+      ok: false,
+      reason: "price-changed",
+      issues: [{ productSlug: "test-powder", variantId: "test-100g", reason: "price-changed" }],
+    });
+  });
+
+  it("reports unavailable items first when a cart has both problems", () => {
+    const built = buildOrderRequest(
+      parseOrderRequestInput(
+        body([
+          { ...LINE_100G, quantity: 1, seenPriceMinor: 19_900 },
+          { productSlug: "test-powder", variantId: "test-sold", quantity: 1, seenPriceMinor: 100 },
+        ]),
+      )!,
+      fixtureCatalogue,
+      "SVF-261014-AAAAAA",
+      NOW,
+      NO_RULES,
+    );
+    expect(built).toMatchObject({ ok: false, reason: "unavailable-items" });
+  });
+
+  it("refuses repeated lines that were shown at different prices", () => {
+    const built = buildOrderRequest(
+      parseOrderRequestInput(
+        body([
+          { ...LINE_100G, quantity: 1 },
+          { ...LINE_100G, quantity: 1, seenPriceMinor: 19_900 },
+        ]),
+      )!,
+      fixtureCatalogue,
+      "SVF-261014-AAAAAA",
+      NOW,
+      NO_RULES,
+    );
+    expect(built).toEqual({ ok: false, reason: "invalid-request" });
+  });
+
+  it("prices today's real catalogue on the server: ₹250 per 100 g, ₹350 per 250 g", () => {
+    const built = buildOrderRequest(
+      parseOrderRequestInput(
+        body([
+          {
+            productSlug: "moringa-powder",
+            variantId: "moringa-powder-100g",
+            quantity: 2,
+            seenPriceMinor: 25_000,
+          },
+          {
+            productSlug: "ginger-powder",
+            variantId: "ginger-powder-250g",
+            quantity: 1,
+            seenPriceMinor: 35_000,
+          },
+        ]),
+      )!,
+      catalogue,
+      "SVF-261014-AAAAAA",
+      NOW,
+      NO_RULES,
+    );
+    if (!built.ok) throw new Error(`expected success, got ${built.reason}`);
+    expect(
+      built.order.lines.map(({ sku, unitPrice, lineTotal }) => [
+        sku,
+        unitPrice.amountMinor,
+        lineTotal.amountMinor,
+      ]),
+    ).toEqual([
+      ["SVARA-MORINGA-100", 25_000, 50_000],
+      ["SVARA-GINGER-250", 35_000, 35_000],
+    ]);
+    expect(built.order.totals.subtotal).toEqual({ amountMinor: 85_000, currency: "INR" });
+  });
+
+  it("refuses a real size at any price but the catalogue's, whatever the browser claims", () => {
+    for (const claimed of [1, 24_900, 35_000]) {
+      const built = buildOrderRequest(
+        parseOrderRequestInput(
+          body([
+            {
+              productSlug: "moringa-powder",
+              variantId: "moringa-powder-100g",
+              quantity: 1,
+              seenPriceMinor: claimed,
+            },
+          ]),
+        )!,
+        catalogue,
+        "SVF-261014-AAAAAA",
+        NOW,
+        NO_RULES,
+      );
+      expect(built, String(claimed)).toMatchObject({ ok: false, reason: "price-changed" });
     }
   });
 });
@@ -148,7 +357,9 @@ describe("submitting an order request", () => {
     counter = 0;
     deps = {
       catalogue: fixtureCatalogue,
+      rules: NO_RULES,
       store,
+      notifier: null,
       now: () => NOW,
       randomBytes: (size) => new Uint8Array(size).fill(counter++),
       logError: vi.fn(),
@@ -188,11 +399,22 @@ describe("submitting an order request", () => {
       body: { error: "invalid-delivery", errors: { pinCode: expect.any(String) } },
     });
     const unavailable = await submitOrderRequest(
-      body([{ productSlug: "test-powder", variantId: "test-sold", quantity: 1 }]),
+      body([
+        { productSlug: "test-powder", variantId: "test-sold", quantity: 1, seenPriceMinor: 100 },
+      ]),
       KEY,
       deps,
     );
     expect(unavailable).toMatchObject({ status: 409, body: { error: "unavailable-items" } });
+    const repriced = await submitOrderRequest(
+      body([{ ...LINE_100G, quantity: 1, seenPriceMinor: 19_900 }]),
+      KEY,
+      deps,
+    );
+    expect(repriced).toMatchObject({
+      status: 409,
+      body: { error: "price-changed", issues: [{ reason: "price-changed" }] },
+    });
     expect(await savedFiles()).toEqual([]);
   });
 
@@ -237,7 +459,7 @@ describe("submitting an order request", () => {
 });
 
 describe("configuration", () => {
-  it("accepts nothing unless the file store is switched on", () => {
+  it("accepts nothing unless a store is switched on", () => {
     expect(orderRequestStoreFromEnv({} as unknown as NodeJS.ProcessEnv)).toBeNull();
     expect(
       orderRequestStoreFromEnv({
@@ -255,5 +477,39 @@ describe("rate limit", () => {
     expect([allow("a"), allow("a"), allow("a"), allow("b")]).toEqual([true, true, false, true]);
     time = 60_000;
     expect(allow("a")).toBe(true);
+  });
+});
+
+describe("notifications after an order request", () => {
+  it("are sent once for a new request — not for a replay, and a failure never fails the order", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "svara-orders-"));
+    const sent: string[] = [];
+    const deps: SubmitDeps = {
+      catalogue: fixtureCatalogue,
+      rules: NO_RULES,
+      store: createFileOrderRequestStore(directory),
+      notifier: {
+        send: async (n) => {
+          sent.push(`${n.kind}:${n.order.reference}`);
+          if (n.audience === "team") throw new Error("no channel");
+        },
+      },
+      now: () => NOW,
+      randomBytes: (size) => new Uint8Array(size).fill(3),
+      logError: vi.fn(),
+    };
+    try {
+      const first = await submitOrderRequest(body(), KEY, deps);
+      const replay = await submitOrderRequest(body(), KEY, deps);
+      expect([first.status, replay.status]).toEqual([201, 200]);
+      if (!first.body.ok) throw new Error("expected success");
+      expect(sent).toEqual([
+        `order-request-received:${first.body.order.reference}`,
+        `team-new-order-request:${first.body.order.reference}`,
+      ]);
+      expect(deps.logError).toHaveBeenCalledTimes(1);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });

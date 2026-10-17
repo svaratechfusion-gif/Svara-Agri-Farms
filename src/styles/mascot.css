@@ -234,6 +234,12 @@
     ) {
     transition: none !important;
   }
+  /* The companion appears and steps aside at once: the global 0.01ms rule
+     would still start a (tiny) transition on every part of the drawing. */
+  .mascot-companion,
+  .mascot-companion * {
+    transition: none !important;
+  }
 }
 
 @keyframes mascot-breathe {
@@ -507,6 +513,12 @@
     visibility: hidden;
     transform: translate3d(0, 1rem, 0);
   }
+}
+/* At every size: a size picker or Add to cart has reached SVARA's corner. */
+.mascot-companion--aside {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, 1rem, 0);
 }
 
 /* ----------------------------------------------------------------------------

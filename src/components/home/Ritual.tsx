@@ -121,7 +121,7 @@ export function Ritual({ index = "02" }: { index?: string }) {
             <span aria-hidden="true" className="mx-3 text-harvest">
               ·
             </span>
-            Pack sizes to be confirmed
+            {moringa.variants.map((variant) => variant.label).join(" · ")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <LeafButton href="/products/moringa-powder" icon="arrow" size="lg">

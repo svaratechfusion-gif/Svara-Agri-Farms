@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: `${site.name} — From the earth. Made with care.`,
     description:
-      "SVARA Farms is a premium farm-to-product agricultural brand beginning with Moringa Powder. Follow one leaf from the earth to your home.",
+      "SVARA Agri Farms is a premium farm-to-product agricultural brand beginning with Moringa Powder. Follow one leaf from the earth to your home.",
     path: "/",
   }),
   title: { absolute: `${site.name} — From the earth. Made with care.` },

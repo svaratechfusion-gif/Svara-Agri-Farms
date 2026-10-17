@@ -355,3 +355,15 @@
     opacity: 0;
   }
 }
+
+/* The shop's section row: on phones a sideways strip, without a scrollbar
+   track; the cut-off chip at the edge shows there is more. */
+@layer components {
+  .shop-sections {
+    scroll-padding-inline: var(--gutter-page);
+    scrollbar-width: none;
+  }
+  .shop-sections::-webkit-scrollbar {
+    display: none;
+  }
+}

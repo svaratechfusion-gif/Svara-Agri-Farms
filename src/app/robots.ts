@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
   if (!isSiteUrlConfigured) return { rules: { userAgent: "*", disallow: "/" } };
   return {
     // Carts, order requests and the API are per visitor: nothing to index.
-    rules: { userAgent: "*", allow: "/", disallow: ["/cart", "/checkout", "/api/"] },
+    rules: { userAgent: "*", allow: "/", disallow: ["/cart", "/order", "/api/"] },
     sitemap: absoluteUrl("/sitemap.xml"),
   };
 }

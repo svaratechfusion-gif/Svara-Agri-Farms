@@ -1,14 +1,16 @@
-import { products } from "@/content/products";
-import type { Product, ProductVariant } from "./types";
+import { catalogue, products } from "@/content/products";
+
+import { sizeAvailability } from "./availability";
+import type { FeaturedProduct, Product, ProductVariant } from "./types";
 
 /**
- * Read-only product repository. Today it reads local content; replace the
- * implementation with a commerce backend (Shopify, Medusa, custom API) without
- * changing any call sites.
+ * Read-only access to the catalogue. Today it reads `content/products.ts`;
+ * a database-backed implementation can replace it without changing callers.
  */
 export interface ProductRepository {
-  findAll(): Promise<readonly Product[]>;
-  findBySlug(slug: string): Promise<Product | null>;
+  /** Products with their own page. */
+  findAll(): Promise<readonly FeaturedProduct[]>;
+  findBySlug(slug: string): Promise<FeaturedProduct | null>;
 }
 
 export const localProductRepository: ProductRepository = {
@@ -20,15 +22,16 @@ export const localProductRepository: ProductRepository = {
   },
 };
 
-/** Synchronous lookup for client UI (cart lines) against bundled data. */
-export function findProductSync(slug: string): Product | null {
-  return products.find((product) => product.slug === slug) ?? null;
+/** Any catalogue entry by slug, for client UI (cart lines). */
+export function findProductSync(slug: string, entries: readonly Product[] = catalogue) {
+  return entries.find((product) => product.slug === slug) ?? null;
 }
 
 export function findVariant(product: Product, variantId: string): ProductVariant | null {
   return product.variants.find((variant) => variant.id === variantId) ?? null;
 }
 
-export function isPurchasable(variant: ProductVariant): boolean {
-  return variant.availability === "available" && variant.price !== null;
+/** Can this size be added to a cart and ordered now: available, at product and size, with a price. */
+export function isPurchasable(product: Product, variant: ProductVariant): boolean {
+  return sizeAvailability(product, variant) === "available" && variant.price !== null;
 }

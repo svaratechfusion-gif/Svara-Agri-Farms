@@ -4,7 +4,12 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // Server modules import "server-only", which throws outside React's
+      // server build; tests run them directly, as Node would on the server.
+      "server-only": fileURLToPath(new URL("./node_modules/server-only/empty.js", import.meta.url)),
+    },
   },
   test: {
     environment: "node",
@@ -13,6 +18,7 @@ export default defineConfig({
       provider: "v8",
       include: [
         "src/lib/commerce/**/*.ts",
+        "src/lib/contact/*.ts",
         "src/lib/motion/scrollProgress.ts",
         "src/content/field-notes.ts",
         "src/components/ui/leafButtonStyles.ts",
@@ -28,8 +34,15 @@ export default defineConfig({
         "src/lib/mascot/chat/*.ts",
         "src/content/mascot-notes.ts",
         "src/lib/flow/flowLayout.ts",
+        "src/server/**/*.ts",
       ],
-      exclude: ["src/**/__tests__/**", "src/lib/commerce/types.ts"],
+      exclude: [
+        "src/**/__tests__/**",
+        "src/lib/commerce/types.ts",
+        // Command-line entry point; the seed it runs is tested.
+        "src/server/db/seed/run.ts",
+        "src/server/db/commerceStatusCli.ts",
+      ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
   },

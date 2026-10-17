@@ -97,6 +97,7 @@ test.describe("first-visit welcome", () => {
     await page
       .locator("form")
       .filter({ hasText: "Add to cart" })
+      .first()
       .getByRole("button", { name: "Add to cart" })
       .click();
     await expect(mascot(page)).toHaveAttribute("data-state", "excited");

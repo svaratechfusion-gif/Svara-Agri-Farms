@@ -4,7 +4,9 @@ import Link from "next/link";
 import { LeafletMark } from "@/components/botanical/LeafletMark";
 import { VeinDivider } from "@/components/botanical/VeinDivider";
 import { Logo } from "@/components/brand/Logo";
+import { WhatsAppLink } from "@/components/ui/WhatsAppLink";
 import { footerColumns, site } from "@/content/site";
+import { generalEnquiry } from "@/lib/contact/whatsapp";
 
 async function CopyrightYear() {
   "use cache";
@@ -39,6 +41,9 @@ export function SiteFooter() {
           </Link>
           <p className="mt-8 max-w-sm type-h3 text-ivory/90 italic">{site.shortDescription}</p>
           <p className="mt-6 type-label text-harvest">{site.philosophy.join(" ")}</p>
+          <WhatsAppLink tone="light" className="mt-6" message={generalEnquiry()}>
+            Chat with us on WhatsApp
+          </WhatsAppLink>
         </div>
         {footerColumns.map((column) => (
           <nav

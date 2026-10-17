@@ -97,3 +97,23 @@ export function CloseIcon({ className = "" }: IconProps) {
     </svg>
   );
 }
+
+/** A fine speech bubble — talking to the team (WhatsApp). */
+export function ChatIcon({ className = "" }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      width="18"
+      height="18"
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+    >
+      <path
+        d="M10 2.75c4.1 0 7.25 2.86 7.25 6.5s-3.15 6.5-7.25 6.5c-.9 0-1.76-.14-2.55-.4L3.5 17.1l1.02-3.37C3.42 12.6 2.75 11 2.75 9.25c0-3.64 3.15-6.5 7.25-6.5Z"
+        {...STROKE}
+      />
+      <path d="M7 9.4h.01M10 9.4h.01M13 9.4h.01" {...STROKE} strokeWidth={1.8} />
+    </svg>
+  );
+}

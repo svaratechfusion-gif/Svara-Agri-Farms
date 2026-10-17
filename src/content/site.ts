@@ -32,11 +32,11 @@ function resolveSiteUrl(): string {
 }
 
 export const site = {
-  name: "SVARA Farms",
+  name: "SVARA Agri Farms",
   url: resolveSiteUrl(),
   philosophy: ["Nature.", "Nurture.", "Nourish."],
   description:
-    "SVARA Farms is a farm-to-product agricultural brand beginning with Moringa Powder — grown on our farm, gathered by hand, dried in the shade and milled with care.",
+    "SVARA Agri Farms is a farm-to-product agricultural brand beginning with Moringa Powder — grown on our farm, gathered by hand, dried in the shade and milled with care.",
   shortDescription: "A journey from leaf to powder.",
   locale: "en_IN",
 } as const;

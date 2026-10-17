@@ -25,7 +25,7 @@ const ARTWORK: Record<number, [number, number]> = {
 
 const section = (page: Page) => page.locator(SECTION);
 const stops = (page: Page) =>
-  page.getByRole("list", { name: "Also in preparation." }).getByRole("listitem");
+  page.getByRole("list", { name: "Also in the range." }).getByRole("listitem");
 
 async function openHome(page: Page) {
   await page.addInitScript(() => sessionStorage.setItem("svara:mascot-welcomed", "1"));
@@ -52,7 +52,7 @@ test("every product is on the roadmap, with labels and links from the catalogue"
   const featured = section(page).getByRole("article", { name: "SVARA Moringa Powder" });
   await expect(featured.getByRole("img", { name: /SVARA Moringa/ })).toBeAttached();
   await expect(featured.getByRole("list", { name: "About this product" })).toContainText(
-    "Coming soon",
+    "Available",
   );
   await expect(featured.getByRole("link", { name: "View product" })).toHaveAttribute(
     "href",
@@ -66,11 +66,11 @@ test("every product is on the roadmap, with labels and links from the catalogue"
     await expect(
       stop.getByRole("img", { name: new RegExp(`SVARA ${name} Powder pouch`) }),
     ).toBeAttached();
-    await expect(stop).toContainText("In preparation");
+    await expect(stop).toContainText("Available");
     await expect(stop).toContainText(String(index + 2).padStart(2, "0"));
   }
-  // Packs in preparation cannot be ordered: no buttons, links or prices.
-  const list = page.getByRole("list", { name: "Also in preparation." });
+  // The roadmap is a journey, not a shop: no buttons, links or prices (the shop sells).
+  const list = page.getByRole("list", { name: "Also in the range." });
   await expect(list.getByRole("button")).toHaveCount(0);
   await expect(list.getByRole("link")).toHaveCount(0);
   await expect(section(page).getByText(/₹|add to cart/i)).toHaveCount(0);

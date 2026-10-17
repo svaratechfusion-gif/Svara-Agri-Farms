@@ -19,6 +19,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // Orders are placed on WhatsApp from the cart for now: the former checkout
+  // form is gone, and its addresses lead back to the cart. Temporary (307),
+  // as a checkout returns once payment is connected.
+  async redirects() {
+    return [
+      { source: "/checkout", destination: "/cart", permanent: false },
+      { source: "/checkout/:path*", destination: "/cart", permanent: false },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

@@ -4,7 +4,8 @@ import { IngredientFlowDivider } from "@/components/botanical/IngredientFlowDivi
 import { flowPlacements } from "@/content/ingredientFlows";
 import { SectionHeader } from "@/components/editorial/SectionHeader";
 import { ProductShowcaseCard } from "@/components/commerce/ProductShowcaseCard";
-import { RangeGrid } from "@/components/commerce/RangeGrid";
+import { RangeGrid, rangeProducts } from "@/components/commerce/RangeGrid";
+import { isPurchasable } from "@/lib/commerce/catalog";
 import { PageIntro } from "@/components/page/PageIntro";
 import { localProductRepository } from "@/lib/commerce/catalog";
 import { buildMetadata } from "@/lib/seo";
@@ -21,6 +22,9 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function ProductsPage() {
   const products = await localProductRepository.findAll();
+  const widerOrderable = rangeProducts.some((product) =>
+    product.variants.some((variant) => isPurchasable(product, variant)),
+  );
   return (
     <>
       <PageIntro
@@ -58,11 +62,12 @@ export default async function ProductsPage() {
           <div>
             <p className="type-label text-earth-ink">The wider range</p>
             <h2 id="range-preview-heading" className="mt-5 max-w-2xl type-h2 text-forest">
-              Also in <em className="italic">preparation.</em>
+              Also in <em className="italic">{widerOrderable ? "the range." : "preparation."}</em>
             </h2>
             <p className="mt-5 max-w-xl type-body text-ink-soft">
-              Packs we are preparing. Sizes, prices and availability will be shared when they are
-              ready — follow our field notes to hear about them first.
+              {widerOrderable
+                ? "Each pack comes in the same sizes as Moringa Powder. Choose a size and add it to your cart right here."
+                : "Packs we are preparing. Sizes, prices and availability will be shared when they are ready — follow our field notes to hear about them first."}
             </p>
             <RangeGrid labelledBy="range-preview-heading" className="mt-12" />
             <LeafLink href="/field-notes" className="mt-8">

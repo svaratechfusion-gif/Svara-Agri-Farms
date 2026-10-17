@@ -34,7 +34,11 @@ test.describe("with today's catalogue", () => {
     const add = page.getByRole("button", { name: "Add to cart" });
     await expect(add).toBeDisabled();
     await expect(page.getByRole("button", { name: "Buy now" })).toBeDisabled();
-    await expect(page.getByText(/is coming soon and cannot be ordered yet/).first()).toBeVisible();
+    await expect(
+      page.getByText(
+        /100 g pouch: Not open for orders yet — ordering opens once its price is confirmed\./,
+      ),
+    ).toBeVisible();
     await expect(headerCount(page)).toHaveAccessibleName(/\b0 items/);
   });
 
@@ -46,10 +50,14 @@ test.describe("with today's catalogue", () => {
     await expect(page.getByText(/kept on this device/)).toHaveCount(0);
   });
 
-  test("an empty cart points to the shop", async ({ page }) => {
+  test("an empty cart points to the shop and home", async ({ page }) => {
     await page.goto("/cart", { waitUntil: "networkidle" });
     await expect(page.getByRole("heading", { name: "Your cart is empty." })).toBeVisible();
-    await page.getByRole("link", { name: "Go to the shop" }).click();
+    await expect(page.locator("main").getByRole("link", { name: "Back to home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    await page.getByRole("link", { name: "Explore products" }).click();
     await page.waitForURL("**/shop");
   });
 
@@ -64,19 +72,14 @@ test.describe("with today's catalogue", () => {
     await expect(
       page.getByRole("alert").filter({ hasText: "can no longer be ordered" }),
     ).toBeVisible();
-    await expect(page.locator("main").getByText("Not available to order right now")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Proceed to delivery details" })).toBeDisabled();
-    await expect(page.getByRole("link", { name: "Proceed to delivery details" })).toHaveCount(0);
-
-    // Checkout refuses it too. (Repeat visits wait for the page, not network
-    // silence: the framework's link prefetches can linger on a revisit.)
-    await page.goto("/checkout", { waitUntil: "load" });
     await expect(
-      page.getByRole("heading", { name: "Your cart needs a look first." }),
+      page.locator("main").getByRole("note").filter({ hasText: "Coming soon" }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Submit order request" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Proceed to order" })).toBeDisabled();
+    await expect(page.getByRole("link", { name: "Proceed to order" })).toHaveCount(0);
 
-    await page.goto("/cart", { waitUntil: "load" });
+    await expect(page.getByRole("link", { name: "Proceed to order" })).toHaveCount(0);
+
     await page.getByRole("button", { name: /^Remove/ }).click();
     await expect(page.getByRole("heading", { name: "Your cart is empty." })).toBeVisible();
     await expect(headerCount(page)).toHaveAccessibleName(/\b0 items/);
@@ -89,33 +92,40 @@ test.describe("with today's catalogue", () => {
     await page.goto("/journey", { waitUntil: "networkidle" });
     await headerCount(page).click();
     const drawer = page.getByRole("dialog", { name: "Your cart" });
-    await expect(drawer).toContainText("Not available to order right now");
+    await expect(drawer).toContainText("Coming soon — cannot be ordered right now");
     await expect(drawer).toContainText("Product subtotal");
     await expect(drawer).toContainText("review your cart to continue");
-    await drawer.getByRole("link", { name: "Review cart & order" }).click();
+    await drawer.getByRole("link", { name: "Review your order" }).click();
     await page.waitForURL("**/cart");
     await expect(drawer).toBeHidden();
   });
 });
 
-test("delivery details need something in the cart first", async ({ page }) => {
-  await page.goto("/checkout", { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: "Your cart is empty." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Go to the shop" })).toHaveAttribute("href", "/shop");
-});
-
-test("a confirmation is never shown without a saved request", async ({ page }) => {
-  await page.goto("/checkout/confirmation", { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: "No recent order request here." })).toBeVisible();
-  await expect(page.locator("main")).not.toContainText(FALSE_CLAIMS);
+test("there is no checkout form: the old addresses lead to the cart", async ({ context }) => {
+  for (const old of ["/checkout", "/checkout/confirmation"]) {
+    // A fresh tab for each address, so neither visit starts on the cart.
+    const page = await context.newPage();
+    await page.goto(old, { waitUntil: "load" });
+    // Read the page itself: after a redirect to a cached page, Firefox's driver
+    // can keep waiting for a navigation the browser has already finished.
+    const shown = () =>
+      page.evaluate(() => ({
+        path: location.pathname,
+        headings: [...document.querySelectorAll("main h2")].map((h) => h.textContent?.trim()),
+        text: document.querySelector("main")?.textContent ?? "",
+      }));
+    await expect
+      .poll(async () => (await shown()).headings, { message: old })
+      .toContain("Your cart is empty.");
+    const { path, text } = await shown();
+    expect(path, old).toBe("/cart");
+    expect(text).not.toMatch(FALSE_CLAIMS);
+    await page.close();
+  }
 });
 
 test("each step of the order shows its title", async ({ page }) => {
-  for (const [path, title] of [
-    ["/cart", "Your cart."],
-    ["/checkout", "Delivery details."],
-    ["/checkout/confirmation", "Pending confirmation."],
-  ]) {
+  for (const [path, title] of [["/cart", "Your cart."]]) {
     await page.goto(path, { waitUntil: "load" });
     const heading = page.getByRole("heading", { level: 1, name: title });
     await expect(heading, path).toBeVisible();
@@ -132,13 +142,7 @@ test("each step of the order shows its title", async ({ page }) => {
 });
 
 test("no page claims a payment or a confirmed order", async ({ page }) => {
-  for (const path of [
-    "/cart",
-    "/checkout",
-    "/checkout/confirmation",
-    "/shop",
-    `/products/${moringa.slug}`,
-  ]) {
+  for (const path of ["/cart", "/shop", `/products/${moringa.slug}`]) {
     await page.goto(path, { waitUntil: "networkidle" });
     await expect(page.locator("main"), path).not.toContainText(FALSE_CLAIMS);
   }
@@ -188,7 +192,7 @@ test.describe("the order-request endpoint", () => {
 });
 
 test("SVARA stays off the cart and order pages", async ({ page }) => {
-  for (const path of ["/cart", "/checkout"]) {
+  for (const path of ["/cart"]) {
     await page.goto(path, { waitUntil: "networkidle" });
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await expect(page.locator(".mascot-companion"), path).toBeHidden();

@@ -19,7 +19,7 @@ import { LeafButton } from "@/components/ui/LeafButton";
 export const metadata: Metadata = buildMetadata({
   title: "Our Story",
   description:
-    "Nature. Nurture. Nourish. Why SVARA Farms begins with the land, and how that idea shapes everything we make.",
+    "Nature. Nurture. Nourish. Why SVARA Agri Farms begins with the land, and how that idea shapes everything we make.",
   path: "/our-story",
   photo: "farmRuralLandscape",
 });
@@ -45,7 +45,7 @@ export default function OurStoryPage() {
       <PageHero
         label="Our Story"
         title={["We grow with purpose."]}
-        lead="SVARA Farms is a farm-to-product brand. We grow, harvest and make — and we start with the land, not the product."
+        lead="SVARA Agri Farms is a farm-to-product brand. We grow, harvest and make — and we start with the land, not the product."
         photo="farmRuralLandscape"
         annotations={["Nature", "Nurture", "Nourish"]}
       />
@@ -54,7 +54,7 @@ export default function OurStoryPage() {
         headingId="manifesto-heading"
         label="What we are"
         lines={[
-          "SVARA Farms is a farm-to-product brand.",
+          "SVARA Agri Farms is a farm-to-product brand.",
           "We grow, harvest and make —",
           "and we start with the land,",
           "not the product.",

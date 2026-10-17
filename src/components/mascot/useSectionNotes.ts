@@ -8,6 +8,26 @@ import { mayShowNote, NOTE_RULES } from "@/lib/mascot/noteRules";
 /** The reading band: a section is "current" while its anchor crosses the middle of the screen. */
 const READING_BAND = "-35% 0px -40% 0px";
 
+/** Where a note bubble sits above SVARA, from the bottom-right of the screen (px). */
+const BUBBLE_FOOTPRINT = { width: 300, height: 240 };
+const COVER_RETRIES = 8;
+const COVER_RETRY_MS = 1500;
+
+/**
+ * Whether a note bubble would now cover something marked `data-note-avoid`
+ * or `data-mascot-avoid` (an order summary, a call to action).
+ */
+function noteWouldCover(): boolean {
+  const left = window.innerWidth - BUBBLE_FOOTPRINT.width;
+  const top = window.innerHeight - BUBBLE_FOOTPRINT.height;
+  return Array.from(document.querySelectorAll("[data-note-avoid], [data-mascot-avoid]")).some(
+    (element) => {
+      const box = element.getBoundingClientRect();
+      return box.width > 0 && box.right > left && box.bottom > top && box.top < window.innerHeight;
+    },
+  );
+}
+
 interface SectionNotesOptions {
   pathname: string;
   /** The panel is open: no bubbles over it. */
@@ -67,45 +87,78 @@ export function useSectionNotes({
   useEffect(() => {
     const notes = notesFor(pathname);
     shown.current = new Set();
-    const anchors = notes
-      .map((note) => ({ note, element: document.querySelector(note.anchor) }))
-      .filter((entry): entry is { note: SectionNote; element: Element } => entry.element !== null);
-    if (anchors.length === 0) return;
+    if (notes.length === 0) return;
+    const findAnchors = () =>
+      notes
+        .map((note) => ({ note, element: document.querySelector(note.anchor) }))
+        .filter(
+          (entry): entry is { note: SectionNote; element: Element } => entry.element !== null,
+        );
 
     let dwell: number | undefined;
-    const observer = new IntersectionObserver(
-      (records) => {
-        const entering = records.filter((record) => record.isIntersecting).at(-1);
-        if (!entering) return;
-        const match = anchors.find((entry) => entry.element === entering.target);
-        if (!match) return;
-        setCurrent(match.note);
-        window.clearTimeout(dwell);
-        dwell = window.setTimeout(() => {
-          const now = Date.now();
-          const anyDialog = document.querySelector("dialog[open]") !== null;
-          const allowed = mayShowNote({
-            anchor: match.note.anchor,
-            now,
-            shown: shown.current,
-            quietUntil: quietUntil.current,
-            blocked: blockedRef.current || deferredRef.current || anyDialog,
-            hidden: hiddenRef.current,
-          });
-          if (!allowed) return;
-          shown.current.add(match.note.anchor);
-          quietUntil.current = now + NOTE_RULES.gapMs;
-          setBubble(match.note);
-          onShowRef.current();
-          window.clearTimeout(hideTimer.current);
-          hideTimer.current = window.setTimeout(() => setBubble(null), NOTE_RULES.visibleMs);
-        }, NOTE_RULES.dwellMs);
-      },
-      { rootMargin: READING_BAND },
-    );
-    anchors.forEach((entry) => observer.observe(entry.element));
+    let observer: IntersectionObserver | undefined;
+    let anchors: { note: SectionNote; element: Element }[] = [];
+    const attach = (): boolean => {
+      anchors = findAnchors();
+      if (anchors.length === 0) return false;
+      observer = watch();
+      anchors.forEach((entry) => observer!.observe(entry.element));
+      return true;
+    };
+    // Pages that render from browser state (e.g. the order page, from the
+    // cart) add their anchors after hydration: wait for them to appear.
+    const pending = attach()
+      ? undefined
+      : new MutationObserver(() => {
+          if (attach()) pending?.disconnect();
+        });
+    pending?.observe(document.body, { childList: true, subtree: true });
+
+    function watch() {
+      return new IntersectionObserver(
+        (records) => {
+          const entering = records.filter((record) => record.isIntersecting).at(-1);
+          if (!entering) return;
+          const match = anchors.find((entry) => entry.element === entering.target);
+          if (!match) return;
+          setCurrent(match.note);
+          window.clearTimeout(dwell);
+          let attempts = 0;
+          const tryShow = () => {
+            // Its section has left the page (e.g. the order form, once the order is ready).
+            if (!match.element.isConnected) return;
+            // The bubble would cover something the customer needs: wait, never cover it.
+            if (noteWouldCover()) {
+              attempts += 1;
+              if (attempts <= COVER_RETRIES) dwell = window.setTimeout(tryShow, COVER_RETRY_MS);
+              return;
+            }
+            const now = Date.now();
+            const anyDialog = document.querySelector("dialog[open]") !== null;
+            const allowed = mayShowNote({
+              anchor: match.note.anchor,
+              now,
+              shown: shown.current,
+              quietUntil: quietUntil.current,
+              blocked: blockedRef.current || deferredRef.current || anyDialog,
+              hidden: hiddenRef.current,
+            });
+            if (!allowed) return;
+            shown.current.add(match.note.anchor);
+            quietUntil.current = now + NOTE_RULES.gapMs;
+            setBubble(match.note);
+            onShowRef.current();
+            window.clearTimeout(hideTimer.current);
+            hideTimer.current = window.setTimeout(() => setBubble(null), NOTE_RULES.visibleMs);
+          };
+          dwell = window.setTimeout(tryShow, NOTE_RULES.dwellMs);
+        },
+        { rootMargin: READING_BAND },
+      );
+    }
     return () => {
-      observer.disconnect();
+      pending?.disconnect();
+      observer?.disconnect();
       window.clearTimeout(dwell);
       window.clearTimeout(hideTimer.current);
       setBubble(null);

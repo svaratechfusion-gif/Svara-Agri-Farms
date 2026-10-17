@@ -6,12 +6,14 @@ import { CutoutImage } from "@/components/botanical/CutoutImage";
 import { ProductPurchase } from "@/components/commerce/ProductPurchase";
 import { IngredientFlowDivider } from "@/components/botanical/IngredientFlowDivider";
 import { flowPlacements } from "@/content/ingredientFlows";
-import { RangeGrid } from "@/components/commerce/RangeGrid";
+import { RangeGrid, rangeProducts } from "@/components/commerce/RangeGrid";
 import { SectionHeader } from "@/components/editorial/SectionHeader";
 import { PageIntro } from "@/components/page/PageIntro";
 import { HandLeafIcon, MillIcon, PouchIcon } from "@/components/ui/processIcons";
 import { photos, type PhotoKey } from "@/content/photos";
-import { range } from "@/content/range";
+import { catalogue } from "@/content/products";
+import type { Availability } from "@/lib/commerce/types";
+import { AVAILABILITY_LABEL, productAvailability } from "@/lib/commerce/availability";
 import { isPurchasable, localProductRepository } from "@/lib/commerce/catalog";
 import { buildMetadata } from "@/lib/seo";
 import { MotionRoot } from "@/components/motion/MotionRoot";
@@ -43,7 +45,7 @@ const DELIVERY_STEPS: readonly {
   },
   {
     title: "To your home",
-    body: "Send an order request from your cart. Our team confirms availability, delivery charges and payment with you — no payment is taken on this site.",
+    body: "Order from your cart on WhatsApp. Our team confirms availability, delivery and payment with you in the chat — no payment is taken on this site.",
     Icon: PouchIcon,
   },
 ];
@@ -57,11 +59,33 @@ interface ShopSection {
 export default async function ShopPage() {
   const products = await localProductRepository.findAll();
   // Read from the catalogue: a product is orderable once a size has a price and is available.
-  const orderable = products.filter((product) => product.variants.some(isPurchasable));
+  const orderable = catalogue.filter((product) =>
+    product.variants.some((variant) => isPurchasable(product, variant)),
+  );
   const firstLabel = orderable.length > 0 ? "Available to order" : "Coming soon";
+  // The wider range is labelled by its shared state, read from the catalogue.
+  const rangeStates = new Set(rangeProducts.map(productAvailability));
+  const rangeState = rangeStates.size === 1 ? [...rangeStates][0] : null;
+  const rangeLabel =
+    rangeState === "available" || rangeState === null
+      ? "The wider range"
+      : AVAILABILITY_LABEL[rangeState];
+  // Every product's state, counted: "12 available to order", or one count per state.
+  const stateCounts = new Map<Availability, number>();
+  for (const product of catalogue) {
+    const state = productAvailability(product);
+    stateCounts.set(state, (stateCounts.get(state) ?? 0) + 1);
+  }
+  const statusLine = [...stateCounts]
+    .map(([state, count]) =>
+      state === "available"
+        ? `${count} available to order`
+        : `${count} ${AVAILABILITY_LABEL[state].toLowerCase()}`,
+    )
+    .join(" · ");
   const SHOP_SECTIONS: readonly ShopSection[] = [
-    { id: "available", label: firstLabel, count: orderable.length || products.length },
-    { id: "in-preparation", label: "In preparation", count: range.length },
+    { id: "available", label: products.length === 1 ? products[0].shortName : firstLabel },
+    { id: "in-preparation", label: rangeLabel, count: rangeProducts.length },
     { id: "how-it-reaches-you", label: "How it reaches you" },
   ];
   return (
@@ -76,24 +100,30 @@ export default async function ShopPage() {
         ]}
         lead={
           orderable.length > 0
-            ? "Everything we sell is grown and prepared on our farm. Choose a size, add it to your cart, and send us an order request."
-            : "Everything we sell is grown and prepared on our farm. Ordering opens for each size once its price and availability are confirmed."
+            ? "Moringa Powder from our farm, and the wider SVARA range. Choose a size, add it to your cart, and order on WhatsApp."
+            : "Moringa Powder from our farm, and the wider SVARA range. Ordering opens for each size once its price and availability are confirmed."
         }
       />
-      <nav
-        aria-label="Shop sections"
-        className="sticky top-[calc(var(--header-height)*0.8)] z-30 border-y hairline bg-ivory"
-      >
-        <ul className="container-page flex gap-2 overflow-x-auto py-3">
-          {SHOP_SECTIONS.map((entry) => (
-            <li key={entry.id} className="shrink-0">
-              <a href={`#${entry.id}`} className="leaf-chip">
-                {entry.label}
-                {entry.count !== undefined && <span className="tabular-nums">({entry.count})</span>}
-              </a>
-            </li>
-          ))}
-        </ul>
+      {/* Part of the page, not a layer over it: it scrolls away with the intro. */}
+      <nav aria-label="Shop sections" className="container-page">
+        <div className="flex flex-col gap-4 border-b hairline pb-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+          <p className="flex items-center gap-3 type-label text-earth-ink">
+            <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-harvest" />
+            {statusLine}
+          </p>
+          <ul className="shop-sections -mx-[var(--gutter-page)] flex snap-x gap-2 overflow-x-auto px-[var(--gutter-page)] lg:mx-0 lg:px-0">
+            {SHOP_SECTIONS.map((entry) => (
+              <li key={entry.id} className="shrink-0 snap-start">
+                <a href={`#${entry.id}`} className="leaf-chip">
+                  {entry.label}
+                  {entry.count !== undefined && (
+                    <span className="tabular-nums">({entry.count})</span>
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </nav>
       <div className="pb-[var(--section-space)]">
         <section
@@ -123,13 +153,14 @@ export default async function ShopPage() {
           className="scroll-mt-40 bg-ivory-deep py-[var(--section-space)]"
         >
           <div className="container-page">
-            <SectionHeader label="In preparation" />
+            <SectionHeader label={rangeLabel} />
             <h2 id="preparation-heading" className="mt-5 type-h1 text-forest">
               Coming to the <em className="text-botanical italic">pantry.</em>
             </h2>
             <p className="mt-5 max-w-xl type-body text-ink-soft">
-              Packs we are preparing. They cannot be ordered yet — sizes, prices and availability
-              will be shared when they are ready.
+              {rangeState === "in-preparation"
+                ? "Packs we are preparing. They cannot be ordered yet — sizes, prices and availability will be shared when they are ready."
+                : "More from the SVARA pantry. Each pack shows whether it can be ordered now."}
             </p>
             <RangeGrid labelledBy="preparation-heading" className="mt-14" />
           </div>

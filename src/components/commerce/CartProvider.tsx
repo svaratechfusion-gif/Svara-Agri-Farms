@@ -6,14 +6,22 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
 
-import { products } from "@/content/products";
+import { catalogue } from "@/content/products";
 import { emitMascotEvent } from "@/lib/mascot/events";
-import { countItems } from "@/lib/commerce/cart";
+import {
+  countItems,
+  isRepeatAdd,
+  planAdd,
+  type LastAdd,
+  type SeenPrice,
+} from "@/lib/commerce/cart";
+import { findProductSync, findVariant } from "@/lib/commerce/catalog";
 import { CART_STORAGE_KEY, createCartStore } from "@/lib/commerce/cartStore";
 import { canAddToCart } from "@/lib/commerce/orderLines";
 import type { Cart } from "@/lib/commerce/types";
@@ -37,8 +45,13 @@ export function useHydrated(): boolean {
   );
 }
 
-/** `added`, or why it was not: the size cannot be ordered right now. */
-export type AddResult = "added" | "unavailable";
+/**
+ * What happened: `added`; `capped` (only enough to reach the per-line limit);
+ * `full` (the line is already at the limit); `repeat` (an identical add a
+ * moment ago — a double click — so nothing more); `unavailable` (the size
+ * cannot be ordered right now).
+ */
+export type AddResult = "added" | "capped" | "full" | "repeat" | "unavailable";
 
 interface CartContextValue {
   cart: Cart;
@@ -49,6 +62,8 @@ interface CartContextValue {
   addItem: (productSlug: string, variantId: string, quantity: number) => AddResult;
   setQuantity: (productSlug: string, variantId: string, quantity: number) => void;
   removeItem: (productSlug: string, variantId: string) => void;
+  /** Records that the customer has read these (changed) prices. */
+  acceptPrices: (prices: readonly SeenPrice[]) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -81,6 +96,7 @@ export function CartProvider({ children }: CartProviderProps) {
   );
   const isPersistent = useSyncExternalStore(noSubscription, cartStore.canPersist, () => true);
   const [isOpen, setIsOpen] = useState(false);
+  const lastAdd = useRef<LastAdd | null>(null);
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -92,11 +108,28 @@ export function CartProvider({ children }: CartProviderProps) {
 
   const addItem = useCallback(
     (productSlug: string, variantId: string, quantity: number): AddResult => {
-      if (!canAddToCart(products, productSlug, variantId)) return "unavailable";
-      const saved = cartStore.dispatch({ type: "add", productSlug, variantId, quantity });
-      emitMascotEvent({ type: "cart-added", quantity });
+      if (!canAddToCart(catalogue, productSlug, variantId)) return "unavailable";
+      const key = `${productSlug}:${variantId}:${quantity}`;
+      const now = Date.now();
+      if (isRepeatAdd(lastAdd.current, key, now)) return "repeat";
+      lastAdd.current = { key, at: now };
+
+      const plan = planAdd(cartStore.getSnapshot(), productSlug, variantId, quantity);
+      if (plan.result === "full") return "full";
+      const product = findProductSync(productSlug);
+      const seenPriceMinor = product
+        ? findVariant(product, variantId)?.price?.amountMinor
+        : undefined;
+      const saved = cartStore.dispatch({
+        type: "add",
+        productSlug,
+        variantId,
+        quantity: plan.adds,
+        seenPriceMinor,
+      });
+      emitMascotEvent({ type: "cart-added", quantity: plan.adds });
       if (!saved) emitMascotEvent({ type: "cart-not-saved" });
-      return "added";
+      return plan.result;
     },
     [],
   );
@@ -105,6 +138,9 @@ export function CartProvider({ children }: CartProviderProps) {
   }, []);
   const removeItem = useCallback((productSlug: string, variantId: string) => {
     cartStore.dispatch({ type: "remove", productSlug, variantId });
+  }, []);
+  const acceptPrices = useCallback((prices: readonly SeenPrice[]) => {
+    cartStore.dispatch({ type: "accept-prices", prices });
   }, []);
   const clearCart = useCallback(() => {
     cartStore.dispatch({ type: "clear" });
@@ -121,11 +157,23 @@ export function CartProvider({ children }: CartProviderProps) {
       addItem,
       setQuantity,
       removeItem,
+      acceptPrices,
       clearCart,
       openCart,
       closeCart,
     }),
-    [cart, isOpen, isPersistent, addItem, setQuantity, removeItem, clearCart, openCart, closeCart],
+    [
+      cart,
+      isOpen,
+      isPersistent,
+      addItem,
+      setQuantity,
+      removeItem,
+      acceptPrices,
+      clearCart,
+      openCart,
+      closeCart,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

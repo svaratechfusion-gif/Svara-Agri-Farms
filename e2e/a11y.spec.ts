@@ -15,8 +15,7 @@ const ROUTES = [
   "/field-notes/the-journey-of-a-leaf",
   "/shop",
   "/cart",
-  "/checkout",
-  "/checkout/confirmation",
+  "/order",
   "/no-such-page",
 ];
 

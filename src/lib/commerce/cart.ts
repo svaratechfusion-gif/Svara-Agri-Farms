@@ -14,10 +14,26 @@ function isSameLine(line: CartLine, productSlug: string, variantId: string): boo
   return line.productSlug === productSlug && line.variantId === variantId;
 }
 
+/** The price a customer has now seen for one size, in paise. */
+export interface SeenPrice {
+  productSlug: string;
+  variantId: string;
+  priceMinor: number;
+}
+
 export type CartAction =
-  | { type: "add"; productSlug: string; variantId: string; quantity: number }
+  | {
+      type: "add";
+      productSlug: string;
+      variantId: string;
+      quantity: number;
+      /** The unit price shown when adding, if the size has one. */
+      seenPriceMinor?: number;
+    }
   | { type: "set-quantity"; productSlug: string; variantId: string; quantity: number }
   | { type: "remove"; productSlug: string; variantId: string }
+  /** The customer has read the current prices: remember them as seen. */
+  | { type: "accept-prices"; prices: readonly SeenPrice[] }
   | { type: "replace"; cart: Cart }
   | { type: "clear" };
 
@@ -28,6 +44,8 @@ export function cartReducer(cart: Cart, action: CartAction): Cart {
       const existing = cart.lines.find((line) =>
         isSameLine(line, action.productSlug, action.variantId),
       );
+      const seen =
+        action.seenPriceMinor === undefined ? {} : { seenPriceMinor: action.seenPriceMinor };
       if (!existing) {
         return {
           lines: [
@@ -36,14 +54,16 @@ export function cartReducer(cart: Cart, action: CartAction): Cart {
               productSlug: action.productSlug,
               variantId: action.variantId,
               quantity: clampQuantity(action.quantity),
+              ...seen,
             },
           ],
         };
       }
+      // Adding again happens from the product page, so its price is now the one seen.
       return {
         lines: cart.lines.map((line) =>
           line === existing
-            ? { ...line, quantity: clampQuantity(line.quantity + action.quantity) }
+            ? { ...line, quantity: clampQuantity(line.quantity + action.quantity), ...seen }
             : line,
         ),
       };
@@ -60,6 +80,15 @@ export function cartReducer(cart: Cart, action: CartAction): Cart {
       return {
         lines: cart.lines.filter((line) => !isSameLine(line, action.productSlug, action.variantId)),
       };
+    case "accept-prices":
+      return {
+        lines: cart.lines.map((line) => {
+          const accepted = action.prices.find((price) =>
+            isSameLine(line, price.productSlug, price.variantId),
+          );
+          return accepted ? { ...line, seenPriceMinor: accepted.priceMinor } : line;
+        }),
+      };
     case "replace":
       return action.cart;
     case "clear":
@@ -69,6 +98,10 @@ export function cartReducer(cart: Cart, action: CartAction): Cart {
 
 export function countItems(cart: Cart): number {
   return cart.lines.reduce((total, line) => total + line.quantity, 0);
+}
+
+export function isPriceMinor(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) > 0;
 }
 
 function isCartLine(value: unknown): value is CartLine {
@@ -96,9 +129,46 @@ export function parseStoredCart(raw: string | null): Cart {
     return {
       lines: lines
         .filter(isCartLine)
-        .map((line) => ({ ...line, quantity: clampQuantity(line.quantity) })),
+        .map(({ productSlug, variantId, quantity, seenPriceMinor }) => ({
+          productSlug,
+          variantId,
+          quantity: clampQuantity(quantity),
+          // A malformed remembered price is dropped, never trusted.
+          ...(isPriceMinor(seenPriceMinor) ? { seenPriceMinor } : {}),
+        })),
     };
   } catch {
     return EMPTY_CART;
   }
+}
+
+/**
+ * What adding `quantity` of a size does to this cart: all of it, part of it
+ * (the line reaches the limit), or nothing (the line is already full).
+ */
+export function planAdd(
+  cart: Cart,
+  productSlug: string,
+  variantId: string,
+  quantity: number,
+): { result: "added" | "capped" | "full"; adds: number } {
+  const current =
+    cart.lines.find((line) => isSameLine(line, productSlug, variantId))?.quantity ?? 0;
+  const room = MAX_QUANTITY_PER_LINE - current;
+  const wanted = clampQuantity(quantity);
+  if (room <= 0) return { result: "full", adds: 0 };
+  if (wanted > room) return { result: "capped", adds: room };
+  return { result: "added", adds: wanted };
+}
+
+/** A second identical add this soon is a double click, not a wish for more. */
+export const REPEAT_ADD_WINDOW_MS = 800;
+
+export interface LastAdd {
+  key: string;
+  at: number;
+}
+
+export function isRepeatAdd(last: LastAdd | null, key: string, now: number): boolean {
+  return last !== null && last.key === key && now - last.at < REPEAT_ADD_WINDOW_MS;
 }

@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { products } from "@/content/products";
+import { catalogue } from "@/content/products";
 
-import { canAddToCart, MAX_LINES, resolveCart } from "../orderLines";
+import { cartReducer } from "../cart";
+import {
+  canAddToCart,
+  currentPrices,
+  MAX_LINES,
+  onlyPricesChanged,
+  resolveCart,
+} from "../orderLines";
 import { fixtureCatalogue } from "./fixtures";
 
 const line = (variantId: string, quantity = 1, productSlug = "test-powder") => ({
@@ -19,12 +26,10 @@ describe("canAddToCart", () => {
     expect(canAddToCart(fixtureCatalogue, "nope", "test-100g")).toBe(false);
   });
 
-  it("allows nothing from today's real catalogue: no size has a price yet", () => {
-    products.forEach((product) =>
+  it("allows every size in today's real catalogue, now that each has a price and is available", () => {
+    catalogue.forEach((product) =>
       product.variants.forEach((variant) =>
-        expect(canAddToCart(products, product.slug, variant.id)).toBe(
-          variant.price !== null && variant.availability === "available",
-        ),
+        expect(canAddToCart(catalogue, product.slug, variant.id)).toBe(true),
       ),
     );
   });
@@ -64,6 +69,53 @@ describe("resolveCart", () => {
     expect(resolveCart({ lines: [] }, fixtureCatalogue).orderable).toBe(false);
     const many = Array.from({ length: MAX_LINES + 1 }, () => line("test-100g"));
     expect(resolveCart({ lines: many }, fixtureCatalogue).orderable).toBe(false);
+  });
+
+  it("explains a price change since the customer saw it, and blocks until accepted", () => {
+    const resolved = resolveCart(
+      {
+        lines: [
+          { ...line("test-100g", 2), seenPriceMinor: 19_900 },
+          { ...line("test-250g"), seenPriceMinor: 54_900 },
+        ],
+      },
+      fixtureCatalogue,
+    );
+    expect(resolved.issues).toEqual([
+      { productSlug: "test-powder", variantId: "test-100g", reason: "price-changed" },
+    ]);
+    expect(resolved.orderable).toBe(false);
+    expect(onlyPricesChanged(resolved)).toBe(true);
+    expect(resolved.lines[0]).toMatchObject({
+      previousUnitPrice: { amountMinor: 19_900, currency: "INR" },
+      unitPrice: { amountMinor: 24_900, currency: "INR" },
+      lineTotal: { amountMinor: 49_800, currency: "INR" },
+    });
+    expect(resolved.lines[1].previousUnitPrice).toBeNull();
+    // The summary already shows today's prices.
+    expect(resolved.subtotal).toEqual({ amountMinor: 104_700, currency: "INR" });
+
+    const accepted = cartReducer(
+      { lines: [{ ...line("test-100g", 2), seenPriceMinor: 19_900 }] },
+      { type: "accept-prices", prices: currentPrices(resolved) },
+    );
+    expect(resolveCart(accepted, fixtureCatalogue).orderable).toBe(true);
+  });
+
+  it("treats a line with no remembered price (an older cart) as unchanged", () => {
+    const resolved = resolveCart({ lines: [line("test-100g")] }, fixtureCatalogue);
+    expect(resolved.orderable).toBe(true);
+    expect(onlyPricesChanged(resolved)).toBe(false);
+  });
+
+  it("does not call an unavailable size a price change", () => {
+    const resolved = resolveCart(
+      { lines: [{ ...line("test-soon"), seenPriceMinor: 100 }] },
+      fixtureCatalogue,
+    );
+    expect(resolved.issues.map((issue) => issue.reason)).toEqual(["not-purchasable"]);
+    expect(onlyPricesChanged(resolved)).toBe(false);
+    expect(currentPrices(resolved)).toEqual([]);
   });
 
   it("has no subtotal when nothing in it can be priced", () => {

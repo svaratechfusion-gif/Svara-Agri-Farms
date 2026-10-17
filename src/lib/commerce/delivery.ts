@@ -74,7 +74,8 @@ export interface DeliveryDetails {
   email: string | null;
   addressLine1: string;
   addressLine2: string | null;
-  locality: string;
+  /** Optional: a village or locality, when the address needs one. */
+  locality: string | null;
   city: string;
   state: IndianState;
   pinCode: string;
@@ -105,7 +106,7 @@ const TEXT_RULES: Record<
     missing: "Enter your house, street or building.",
   },
   addressLine2: { required: false, min: 0, max: 120, missing: "" },
-  locality: { required: true, min: 2, max: 80, missing: "Enter your locality or village." },
+  locality: { required: false, min: 0, max: 80, missing: "" },
   city: { required: true, min: 2, max: 80, missing: "Enter your city or town." },
   instructions: { required: false, min: 0, max: 300, missing: "" },
 };
@@ -174,7 +175,7 @@ export function validateDelivery(input: DeliveryInput): DeliveryResult {
       email: email || null,
       addressLine1: value.addressLine1,
       addressLine2: value.addressLine2 || null,
-      locality: value.locality,
+      locality: value.locality || null,
       city: value.city,
       state: value.state as IndianState,
       pinCode,

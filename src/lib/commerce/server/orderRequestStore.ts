@@ -7,12 +7,12 @@ import type { OrderRequest } from "../orderRequest";
 /**
  * Where order requests are kept. Server-only — never import from client code.
  *
- * One implementation exists today: JSON files on the server's own disk. It is
- * OFF unless `ORDER_REQUESTS_STORE=file` is set, and suits a long-running
- * `next start` server (a VM or your own machine). It does NOT suit serverless
- * hosts (e.g. Vercel), whose disks are temporary — connect a database there by
- * implementing this interface. Each file holds the customer's delivery
- * details: keep the directory private and backed up.
+ * Two implementations exist, chosen in `configuredStore.ts`:
+ *   - JSON files on the server's own disk (below), for a long-running
+ *     `next start` server (a VM or your own machine). NOT for serverless hosts
+ *     (e.g. Vercel), whose disks are temporary. Each file holds the customer's
+ *     delivery details: keep the directory private and backed up.
+ *   - PostgreSQL (`src/server/dal/orderRequests.ts`), for any host.
  */
 export interface OrderRequestStore {
   /** Saves a new request. Throws `DuplicateSubmission` if the key was already used. */
@@ -29,7 +29,7 @@ export class DuplicateSubmission extends Error {
 
 export class ReferenceTaken extends Error {}
 
-const hashKey = (key: string) => createHash("sha256").update(key).digest("hex");
+export const hashKey = (key: string) => createHash("sha256").update(key).digest("hex");
 
 function isAlreadyThere(error: unknown): boolean {
   return (error as NodeJS.ErrnoException)?.code === "EEXIST";
@@ -92,17 +92,4 @@ export function createFileOrderRequestStore(directory: string): OrderRequestStor
       }
     },
   };
-}
-
-/** The configured store, or null when order requests are not being accepted. */
-export function orderRequestStoreFromEnv(
-  env: NodeJS.ProcessEnv = process.env,
-): OrderRequestStore | null {
-  if (env.ORDER_REQUESTS_STORE !== "file") return null;
-  // A runtime location, not a bundled file: keep the bundler from tracing it.
-  const directory = path.resolve(
-    /*turbopackIgnore: true*/ process.cwd(),
-    env.ORDER_REQUESTS_DIR || ".data/order-requests",
-  );
-  return createFileOrderRequestStore(directory);
 }

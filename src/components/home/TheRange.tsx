@@ -1,12 +1,14 @@
 import { RevealHeading } from "@/components/editorial/RevealHeading";
 import { SectionHeader } from "@/components/editorial/SectionHeader";
-import { products } from "@/content/products";
-import { range } from "@/content/range";
+import { catalogue, products } from "@/content/products";
 import { buildRoadmap } from "@/lib/commerce/roadmap";
 
 import { ProductRoadmap } from "./ProductRoadmap";
 
-const roadmap = buildRoadmap(products, range);
+const roadmap = buildRoadmap(
+  products,
+  catalogue.filter((product) => !product.hasProductPage),
+);
 
 /**
  * Our products, as a journey rather than a grid: SVARA Moringa Powder opens

@@ -1,10 +1,10 @@
-import type { Product } from "@/lib/commerce/types";
+import type { FeaturedProduct } from "@/lib/commerce/types";
 
 import { ProductGallery } from "./ProductGallery";
 import { ProductInformation } from "./ProductInformation";
 
 interface ProductPurchaseProps {
-  product: Product;
+  product: FeaturedProduct;
   headingLevel?: "h1" | "h2";
   preloadImage?: boolean;
 }

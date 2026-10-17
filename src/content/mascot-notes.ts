@@ -4,7 +4,8 @@ import { journeyStages } from "./journey";
  * SVARA's contextual notes: one short line per section, keyed by a selector
  * for that section's anchor. Every note restates copy the site already shows
  * on that page — no new claims about the farm, the process or the product.
- * Purchase areas and the cart deliberately have no note.
+ * Purchase areas and the cart deliberately have no note; the order page has
+ * two, which only point the way.
  */
 export interface SectionNote {
   /** CSS selector for the section's anchor (usually its heading). */
@@ -55,7 +56,7 @@ const HOME: readonly SectionNote[] = [
   },
   {
     anchor: "#range-heading",
-    note: "Moringa Powder comes first; the other packs are still in preparation.",
+    note: "Moringa Powder comes first; the other powders follow it in the range.",
   },
   { anchor: "#notes-heading", note: "Field notes are short stories from the farm — open any one." },
   { anchor: "#closing-heading", note: "Nature. Nurture. Nourish. From our farm, to your home." },
@@ -64,6 +65,19 @@ const HOME: readonly SectionNote[] = [
 /** Notes by route. A route maps to the first matching entry (exact path, or a prefix ending in "/"). */
 export const MASCOT_NOTES: ReadonlyArray<{ route: string; notes: readonly SectionNote[] }> = [
   { route: "/", notes: HOME },
+  {
+    route: "/order",
+    notes: [
+      {
+        anchor: "#order-heading",
+        note: "Almost there! 🌿 Tell us where you'd like your SVARA products delivered.",
+      },
+      {
+        anchor: "#order-summary-heading",
+        note: "Once you're ready, I'll prepare your order for WhatsApp.",
+      },
+    ],
+  },
   {
     route: "/farm",
     notes: [
@@ -124,7 +138,7 @@ export const MASCOT_NOTES: ReadonlyArray<{ route: string; notes: readonly Sectio
     notes: [
       {
         anchor: "#manifesto-heading",
-        note: "SVARA Farms starts with the land, not the product — the idea behind every page.",
+        note: "SVARA Agri Farms starts with the land, not the product — the idea behind every page.",
       },
       {
         anchor: "#meet-svara-heading",

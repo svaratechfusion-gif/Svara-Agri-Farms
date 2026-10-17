@@ -771,3 +771,34 @@
     transform: scale(1);
   }
 }
+
+/* The order confirmation mark: the ring settles and the tick draws in.
+   Without motion it is simply there, fully drawn. */
+@media (prefers-reduced-motion: no-preference) {
+  .order-success__ring {
+    transform-origin: 48px 48px;
+    animation: order-success-ring 0.8s var(--ease-organic) both;
+  }
+  .order-success__tick {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: order-success-tick 0.6s 0.35s var(--ease-organic) forwards;
+  }
+}
+
+@keyframes order-success-ring {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes order-success-tick {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

@@ -1,6 +1,8 @@
+import { sizeAvailability } from "./availability";
+import type { SeenPrice } from "./cart";
 import { findVariant, isPurchasable } from "./catalog";
 import { multiplyMoney, sumMoney } from "./money";
-import type { Cart, Money, Product } from "./types";
+import type { Availability, Cart, Money, Product } from "./types";
 
 /**
  * Pricing and availability: the cart (what the customer chose) read against
@@ -16,17 +18,24 @@ export interface ResolvedLine {
   variantId: string;
   productName: string;
   variantLabel: string;
+  sku: string;
+  weightGrams: number;
   quantity: number;
   unitPrice: Money | null;
   lineTotal: Money | null;
   /** Has a price and is available to order right now. */
   purchasable: boolean;
+  /** How this size reads to the customer now (e.g. "coming-soon"). */
+  availability: Availability;
+  /** The price the customer last saw, when it differs from `unitPrice`. */
+  previousUnitPrice: Money | null;
 }
 
 export interface CartIssue {
   productSlug: string;
   variantId: string;
-  reason: "unknown-product" | "not-purchasable";
+  /** `price-changed`: still orderable, but not at the price the customer saw. */
+  reason: "unknown-product" | "not-purchasable" | "price-changed";
 }
 
 export interface ResolvedCart {
@@ -46,7 +55,7 @@ export function canAddToCart(
 ): boolean {
   const product = catalogue.find((entry) => entry.slug === productSlug);
   const variant = product ? findVariant(product, variantId) : null;
-  return variant !== null && isPurchasable(variant);
+  return product !== undefined && variant !== null && isPurchasable(product, variant);
 }
 
 export function resolveCart(cart: Cart, catalogue: readonly Product[]): ResolvedCart {
@@ -64,12 +73,16 @@ export function resolveCart(cart: Cart, catalogue: readonly Product[]): Resolved
       });
       continue;
     }
-    const purchasable = isPurchasable(variant);
-    if (!purchasable) {
+    const purchasable = isPurchasable(product, variant);
+    const priceChanged =
+      purchasable &&
+      line.seenPriceMinor !== undefined &&
+      line.seenPriceMinor !== variant.price!.amountMinor;
+    if (!purchasable || priceChanged) {
       issues.push({
         productSlug: line.productSlug,
         variantId: line.variantId,
-        reason: "not-purchasable",
+        reason: purchasable ? "price-changed" : "not-purchasable",
       });
     }
     lines.push({
@@ -77,10 +90,16 @@ export function resolveCart(cart: Cart, catalogue: readonly Product[]): Resolved
       variantId: variant.id,
       productName: product.name,
       variantLabel: variant.label,
+      sku: variant.sku,
+      weightGrams: variant.weightGrams,
       quantity: line.quantity,
       unitPrice: variant.price,
       lineTotal: purchasable && variant.price ? multiplyMoney(variant.price, line.quantity) : null,
       purchasable,
+      availability: sizeAvailability(product, variant),
+      previousUnitPrice: priceChanged
+        ? { amountMinor: line.seenPriceMinor!, currency: variant.price!.currency }
+        : null,
     });
   }
 
@@ -92,4 +111,22 @@ export function resolveCart(cart: Cart, catalogue: readonly Product[]): Resolved
     subtotal: priced.length > 0 ? sumMoney(priced) : null,
     orderable: lines.length > 0 && lines.length <= MAX_LINES && issues.length === 0,
   };
+}
+
+/** Some lines changed price since the customer saw them; nothing else is wrong. */
+export function onlyPricesChanged(resolved: ResolvedCart): boolean {
+  return (
+    resolved.issues.length > 0 && resolved.issues.every((issue) => issue.reason === "price-changed")
+  );
+}
+
+/** Today's prices for every orderable line, to record once the customer has read them. */
+export function currentPrices(resolved: ResolvedCart): SeenPrice[] {
+  return resolved.lines
+    .filter((line) => line.purchasable && line.unitPrice)
+    .map((line) => ({
+      productSlug: line.productSlug,
+      variantId: line.variantId,
+      priceMinor: line.unitPrice!.amountMinor,
+    }));
 }

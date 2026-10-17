@@ -55,8 +55,9 @@ export function MeetSvara() {
             Meet SVARA, <em className="text-botanical italic">a seed with a sprout.</em>
           </h2>
           <p className="mt-6 max-w-md type-lead text-ink-soft">
-            SVARA is the botanical companion of SVARA Farms — curious, gentle and never in a hurry.
-            You&rsquo;ll find it in the corner of every page, ready to point you to the right place.
+            SVARA is the botanical companion of SVARA Agri Farms — curious, gentle and never in a
+            hurry. You&rsquo;ll find it in the corner of every page, ready to point you to the right
+            place.
           </p>
           <p className="mt-8 type-label text-earth-ink" id="mascot-moods-label">
             Its moods
@@ -86,7 +87,7 @@ export function MeetSvara() {
               key={ONE_SHOT.has(state) ? `${state}-${play}` : "steady"}
               state={state}
               size={260}
-              ariaLabel={`SVARA, the SVARA Farms companion — ${label(state).toLowerCase()}`}
+              ariaLabel={`SVARA, the SVARA Agri Farms companion — ${label(state).toLowerCase()}`}
               onStateEnd={handleEnd}
             />
           </div>

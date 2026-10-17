@@ -1,6 +1,10 @@
-import { products } from "@/content/products";
-import { range } from "@/content/range";
-import { AVAILABILITY_LABEL } from "@/lib/commerce/availability";
+import { catalogue, products } from "@/content/products";
+import { orderHelp, whatsappUrl } from "@/lib/contact/whatsapp";
+import {
+  AVAILABILITY_LABEL,
+  productAvailability,
+  sizeAvailability,
+} from "@/lib/commerce/availability";
 import { formatMoney } from "@/lib/commerce/money";
 import type { Money, Product } from "@/lib/commerce/types";
 
@@ -54,6 +58,8 @@ export interface QuickReply {
 export interface ChatLink {
   href: string;
   label: string;
+  /** Opens outside the site (e.g. WhatsApp), in a new tab. */
+  external?: boolean;
 }
 
 export interface ScriptNode {
@@ -138,7 +144,9 @@ export function priceFacts(catalogue: readonly Product[]): string[] {
 /** "Moringa Powder: Coming soon." — every distinct state across its sizes. */
 export function availabilityFacts(catalogue: readonly Product[], inPreparation: number): string[] {
   const lines = catalogue.map((product) => {
-    const labels = [...new Set(product.variants.map((v) => AVAILABILITY_LABEL[v.availability]))];
+    const labels = [
+      ...new Set(product.variants.map((v) => AVAILABILITY_LABEL[sizeAvailability(product, v)])),
+    ];
     return `${product.shortName}: ${labels.join(" / ")}.`;
   });
   return inPreparation > 0
@@ -149,7 +157,7 @@ export function availabilityFacts(catalogue: readonly Product[], inPreparation: 
 export const SCRIPT: Readonly<Record<NodeId, ScriptNode>> = {
   hello: {
     id: "hello",
-    text: "Hey there! 🌱 I'm SVARA, your little guide to SVARA Farms. Ready to explore something natural?",
+    text: "Hey there! 🌱 I'm SVARA, your little guide to SVARA Agri Farms. Ready to explore something natural?",
     replies: MAIN_REPLIES,
     mood: "greeting",
   },
@@ -202,16 +210,23 @@ export const SCRIPT: Readonly<Record<NodeId, ScriptNode>> = {
   availability: {
     id: "availability",
     text: "I'll take you to the shop so you can check the current listing.",
-    facts: availabilityFacts(products, range.length),
+    facts: availabilityFacts(
+      products,
+      catalogue.filter(
+        (product) => !product.hasProductPage && productAvailability(product) === "in-preparation",
+      ).length,
+    ),
     links: [{ href: "/shop", label: "Open the shop" }],
     replies: ["see-products"],
     mood: "explaining",
   },
   order: {
     id: "order",
-    // The site has no order system or support page yet, so SVARA says so
-    // rather than pointing at one that does not exist.
-    text: "I can't access your order details just yet, and there's no order-support page on this site for me to point you to.",
+    // SVARA cannot see orders; the team can, on WhatsApp.
+    text: "I can't see order details myself, but our team can help on WhatsApp.",
+    links: [
+      { href: whatsappUrl(orderHelp({})), label: "Chat with our team on WhatsApp", external: true },
+    ],
     replies: MAIN_REPLIES,
     mood: "explaining",
   },

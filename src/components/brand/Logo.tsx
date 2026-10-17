@@ -12,12 +12,12 @@ interface LogoProps {
   sizeClassName?: string;
   className?: string;
   preload?: boolean;
-  /** Set when an adjacent label or link name already says "SVARA Farms". */
+  /** Set when an adjacent label or link name already says "SVARA Agri Farms". */
   decorative?: boolean;
 }
 
 /**
- * The official SVARA Farms seal, rendered from the supplied artwork.
+ * The official SVARA Agri Farms seal, rendered from the supplied artwork.
  * The circular frame only trims the white square around the round seal —
  * the mark itself is never redrawn, recoloured or distorted (1:1 always).
  */
@@ -37,7 +37,7 @@ export function Logo({
     >
       <Image
         src={logo}
-        alt={decorative ? "" : "SVARA Farms"}
+        alt={decorative ? "" : "SVARA Agri Farms"}
         width={size}
         height={size}
         sizes={`${size}px`}

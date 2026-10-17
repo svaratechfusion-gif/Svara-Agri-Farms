@@ -5,8 +5,11 @@ import {
   clampQuantity,
   countItems,
   EMPTY_CART,
+  isRepeatAdd,
   MAX_QUANTITY_PER_LINE,
   parseStoredCart,
+  planAdd,
+  REPEAT_ADD_WINDOW_MS,
 } from "../cart";
 
 const SLUG = "moringa-powder";
@@ -157,5 +160,91 @@ describe("parseStoredCart", () => {
     expect(parseStoredCart(raw)).toEqual({
       lines: [{ productSlug: SLUG, variantId: VARIANT, quantity: MAX_QUANTITY_PER_LINE }],
     });
+  });
+});
+
+describe("the price a customer has seen", () => {
+  it("is remembered on add, and refreshed when the same size is added again", () => {
+    const first = cartReducer(EMPTY_CART, {
+      type: "add",
+      productSlug: SLUG,
+      variantId: VARIANT,
+      quantity: 1,
+      seenPriceMinor: 19_900,
+    });
+    expect(first.lines[0].seenPriceMinor).toBe(19_900);
+    const again = cartReducer(first, {
+      type: "add",
+      productSlug: SLUG,
+      variantId: VARIANT,
+      quantity: 1,
+      seenPriceMinor: 24_900,
+    });
+    expect(again.lines[0]).toEqual({
+      productSlug: SLUG,
+      variantId: VARIANT,
+      quantity: 2,
+      seenPriceMinor: 24_900,
+    });
+    expect(first.lines[0].seenPriceMinor).toBe(19_900);
+  });
+
+  it("is updated only for the accepted lines", () => {
+    const cart = {
+      lines: [
+        { productSlug: SLUG, variantId: VARIANT, quantity: 1, seenPriceMinor: 100 },
+        { productSlug: SLUG, variantId: "other", quantity: 1, seenPriceMinor: 200 },
+      ],
+    };
+    const next = cartReducer(cart, {
+      type: "accept-prices",
+      prices: [{ productSlug: SLUG, variantId: VARIANT, priceMinor: 150 }],
+    });
+    expect(next.lines.map((line) => line.seenPriceMinor)).toEqual([150, 200]);
+    expect(cart.lines[0].seenPriceMinor).toBe(100);
+  });
+
+  it("survives storage, and a malformed one is dropped rather than trusted", () => {
+    const raw = JSON.stringify({
+      lines: [
+        { productSlug: SLUG, variantId: VARIANT, quantity: 1, seenPriceMinor: 24_900 },
+        { productSlug: SLUG, variantId: "b", quantity: 1, seenPriceMinor: -5 },
+        { productSlug: SLUG, variantId: "c", quantity: 1, seenPriceMinor: "24900" },
+        { productSlug: SLUG, variantId: "d", quantity: 1, extra: "ignored" },
+      ],
+    });
+    expect(parseStoredCart(raw).lines).toEqual([
+      { productSlug: SLUG, variantId: VARIANT, quantity: 1, seenPriceMinor: 24_900 },
+      { productSlug: SLUG, variantId: "b", quantity: 1 },
+      { productSlug: SLUG, variantId: "c", quantity: 1 },
+      { productSlug: SLUG, variantId: "d", quantity: 1 },
+    ]);
+  });
+});
+
+describe("planAdd and repeated adds", () => {
+  const cartWith = (quantity: number) => ({
+    lines: [{ productSlug: SLUG, variantId: VARIANT, quantity }],
+  });
+
+  it("adds everything while there is room", () => {
+    expect(planAdd(EMPTY_CART, SLUG, VARIANT, 3)).toEqual({ result: "added", adds: 3 });
+    expect(planAdd(cartWith(7), SLUG, VARIANT, 3)).toEqual({ result: "added", adds: 3 });
+  });
+
+  it("adds only up to the per-line limit, then nothing", () => {
+    expect(planAdd(cartWith(8), SLUG, VARIANT, 5)).toEqual({ result: "capped", adds: 2 });
+    expect(planAdd(cartWith(MAX_QUANTITY_PER_LINE), SLUG, VARIANT, 1)).toEqual({
+      result: "full",
+      adds: 0,
+    });
+  });
+
+  it("treats an identical add within a moment as a double click", () => {
+    const last = { key: "a", at: 1_000 };
+    expect(isRepeatAdd(null, "a", 1_100)).toBe(false);
+    expect(isRepeatAdd(last, "a", 1_000 + REPEAT_ADD_WINDOW_MS - 1)).toBe(true);
+    expect(isRepeatAdd(last, "a", 1_000 + REPEAT_ADD_WINDOW_MS)).toBe(false);
+    expect(isRepeatAdd(last, "b", 1_100)).toBe(false);
   });
 });

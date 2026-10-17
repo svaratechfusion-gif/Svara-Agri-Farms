@@ -89,16 +89,29 @@ export function MascotChat({ chat, pathname, onChoose, onSay, onNavigate }: Masc
                   ))}
                 </ul>
               )}
-              {node?.links?.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => onNavigate()}
-                  className="mt-2 inline-flex items-center gap-1.5 type-small font-medium text-botanical underline-offset-4 hover:underline"
-                >
-                  {link.label} <span aria-hidden="true">→</span>
-                </Link>
-              ))}
+              {node?.links?.map((link) =>
+                link.external ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 type-small font-medium text-botanical underline-offset-4 hover:underline"
+                  >
+                    {link.label} <span aria-hidden="true">↗</span>
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => onNavigate()}
+                    className="mt-2 inline-flex items-center gap-1.5 type-small font-medium text-botanical underline-offset-4 hover:underline"
+                  >
+                    {link.label} <span aria-hidden="true">→</span>
+                  </Link>
+                ),
+              )}
             </div>
           );
         })}

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const WELCOMED_KEY = "svara:mascot-welcomed";
-const GREETING = "Hey there! 🌱 I'm SVARA, your little guide to SVARA Farms.";
+const GREETING = "Hey there! 🌱 I'm SVARA, your little guide to SVARA Agri Farms.";
 
 const mascot = (page: Page) => page.locator(".mascot-launcher svg.mascot");
 const panel = (page: Page) => page.getByRole("dialog", { name: "Hello, I’m SVARA." });
@@ -124,13 +124,20 @@ test("typed questions get scripted, catalogue-backed answers — or an honest �
   await expect(log(page)).toContainText("before making that claim");
 
   await ask(page, "What is the price?");
-  await expect(log(page)).toContainText("Moringa Powder: price not listed yet.");
+  await expect(log(page)).toContainText("Moringa Powder: from ₹250.");
 
   await ask(page, "Is it available?");
-  await expect(log(page)).toContainText("Moringa Powder: Coming soon.");
+  await expect(log(page)).toContainText("Moringa Powder: Available.");
 
   await ask(page, "Where is my order?");
-  await expect(log(page)).toContainText("I can't access your order details just yet");
+  await expect(log(page)).toContainText(
+    "I can't see order details myself, but our team can help on WhatsApp",
+  );
+  await expect(
+    log(page)
+      .getByRole("link", { name: /Chat with our team on WhatsApp/ })
+      .last(),
+  ).toHaveAttribute("href", /^https:\/\/wa\.me\/917780262442\?text=/);
 
   await ask(page, "How do I use this powder?");
   await expect(

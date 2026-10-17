@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { products } from "@/content/products";
-import { range } from "@/content/range";
+import { catalogue, products } from "@/content/products";
 
-import { AVAILABILITY_LABEL } from "../availability";
-import { buildRoadmap, IN_PREPARATION, MILESTONE_SCALES } from "../roadmap";
-import type { Product } from "../types";
+import { AVAILABILITY_LABEL, productAvailability, sizeAvailability } from "../availability";
+import { buildRoadmap, MILESTONE_SCALES } from "../roadmap";
+import type { FeaturedProduct } from "../types";
 
+const range = catalogue.filter((product) => !product.hasProductPage);
 const roadmap = buildRoadmap(products, range);
 
 describe("the product roadmap", () => {
@@ -19,7 +19,9 @@ describe("the product roadmap", () => {
 
   it("states the featured product's availability exactly as the catalogue does", () => {
     const labels = [
-      ...new Set(products[0].variants.map((v) => AVAILABILITY_LABEL[v.availability])),
+      ...new Set(
+        products[0].variants.map((v) => AVAILABILITY_LABEL[sizeAvailability(products[0], v)]),
+      ),
     ];
     expect(roadmap.featured.availability).toEqual(labels);
   });
@@ -30,12 +32,15 @@ describe("the product roadmap", () => {
     );
   });
 
-  it("follows with every pack in preparation, in catalogue order, none of them orderable", () => {
+  it("follows with every other pack, in catalogue order, each with its catalogue state", () => {
     expect(roadmap.milestones.map((m) => m.id)).toEqual(range.map((item) => item.id));
-    roadmap.milestones.forEach((milestone) => {
-      expect(milestone.status).toBe(IN_PREPARATION);
+    roadmap.milestones.forEach((milestone, index) => {
+      expect(milestone.status).toBe(AVAILABILITY_LABEL[productAvailability(range[index])]);
       expect(milestone).not.toHaveProperty("href");
     });
+    // Today every one of them is available.
+    expect(new Set(roadmap.milestones.map((m) => m.status))).toEqual(new Set(["Available"]));
+    expect(roadmap.widerOrderable).toBe(true);
   });
 
   it("alternates sides, starting with the image on the left", () => {
@@ -58,6 +63,8 @@ describe("the product roadmap", () => {
   });
 
   it("refuses to build without a product to begin with", () => {
-    expect(() => buildRoadmap([] as readonly Product[], range)).toThrow(/at least one product/);
+    expect(() => buildRoadmap([] as readonly FeaturedProduct[], range)).toThrow(
+      /at least one product/,
+    );
   });
 });

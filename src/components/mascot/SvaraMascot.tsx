@@ -85,14 +85,14 @@ class MascotBoundary extends Component<
 }
 
 /**
- * SVARA, SVARA Farms' botanical companion: a seed-shaped character with a
+ * SVARA, SVARA Agri Farms' botanical companion: a seed-shaped character with a
  * moringa-leaf crest, rendered as SVG and animated from the avatar definition
  * in `src/content/mascot.avatar.json`. Pure CSS transforms; no animation library.
  */
 export function SvaraMascot({
   state = "idle",
   size = 64,
-  ariaLabel = "SVARA, the SVARA Farms companion",
+  ariaLabel = "SVARA, the SVARA Agri Farms companion",
   decorative = false,
   className = "",
   onStateEnd,

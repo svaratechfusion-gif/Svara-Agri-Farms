@@ -1,3 +1,4 @@
+import { catalogueImages } from "@/content/catalogueImages";
 import Image from "next/image";
 import type { CSSProperties } from "react";
 
@@ -33,13 +34,13 @@ export function FutureScene({ headingId }: { headingId: string }) {
             what we can make with the same care.
           </p>
           <LeafLink href="/products" className="mt-8">
-            See what is in preparation
+            See the full range
           </LeafLink>
         </div>
 
         <div className="relative h-[min(110vw,34rem)] lg:col-span-7 lg:h-[40rem]">
           <ul
-            aria-label="Packs in preparation"
+            aria-label="The wider range"
             className="absolute inset-x-0 top-[6%] grid grid-cols-4 gap-2 sm:gap-4 lg:grid-cols-6"
             data-reveal="stagger"
           >
@@ -53,11 +54,13 @@ export function FutureScene({ headingId }: { headingId: string }) {
               >
                 <div
                   className="relative opacity-45 saturate-[0.55]"
-                  style={{ aspectRatio: `${item.image.width} / ${item.image.height}` }}
+                  style={{
+                    aspectRatio: `${catalogueImages[item.image].src.width} / ${catalogueImages[item.image].src.height}`,
+                  }}
                 >
                   <Image
-                    src={item.image}
-                    alt={item.alt}
+                    src={catalogueImages[item.image].src}
+                    alt={catalogueImages[item.image].alt}
                     fill
                     sizes="(min-width: 1024px) 14vw, 24vw"
                     className="object-contain"

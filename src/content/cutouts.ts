@@ -33,11 +33,12 @@ export const cutouts = {
    */
   leafSingle: { src: leafSingle, alt: "" },
   /**
-   * The SVARA pouch — cream packaging, the chosen direction. Artwork is used
-   * exactly as supplied. It prints claims ("Rich in natural nutrients",
-   * "Sustainably farmed", "No additives", "100% Organic") and "NET WT. 250 g";
-   * none is repeated in site copy, metadata or structured data until verified,
-   * and the 100 g / 250 g options stay provisional (README → Before launch).
+   * The SVARA pouch — cream packaging, the chosen direction. Retouched on
+   * 2026-10-18: the printed "NET WT. 250 g" (both sizes are sold) and the
+   * unverified claims ("Rich in natural nutrients", "Plant based",
+   * "Sustainably farmed", "No additives") were removed. The seal's "100%
+   * ORGANIC" remains until the designer supplies a corrected mark; none of it
+   * is repeated in site copy, metadata or structured data (README → Before launch).
    */
   svaraPouch: {
     src: svaraPouch,
