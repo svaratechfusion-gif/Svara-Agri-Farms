@@ -33,6 +33,7 @@ function resolveSiteUrl(): string {
 
 export const site = {
   name: "SVARA Agri Farms",
+  credit: "Svara TechFusion Pvt Ltd",
   url: resolveSiteUrl(),
   philosophy: ["Nature.", "Nurture.", "Nourish."],
   description:

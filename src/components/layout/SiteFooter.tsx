@@ -76,6 +76,14 @@ export function SiteFooter() {
           © <CopyrightYear /> {site.name}
         </p>
         <p className="type-label text-ivory/65">Nature · Nurture · Nourish</p>
+        <p className="inline-flex items-center gap-2 self-start rounded-2xl border border-rule-light px-4 py-1.5 type-label text-ivory/65 sm:self-auto sm:rounded-full">
+          <span aria-hidden="true" className="text-harvest">
+            <LeafletMark variant="filled" size={10} rotate={-30} />
+          </span>
+          <span>
+            Designed &amp; developed by <span className="text-ivory/90">{site.credit}</span>
+          </span>
+        </p>
       </div>
     </footer>
   );
