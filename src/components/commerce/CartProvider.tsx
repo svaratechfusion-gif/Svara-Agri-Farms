@@ -13,6 +13,7 @@ import {
 } from "react";
 
 import { catalogue } from "@/content/products";
+import { trackAddToCart, trackRemoveFromCart } from "@/lib/analytics/events";
 import { emitMascotEvent } from "@/lib/mascot/events";
 import {
   countItems,
@@ -35,6 +36,21 @@ const cartStore = createCartStore(() => {
 });
 
 const noSubscription = () => () => undefined;
+
+/** The cart on this device right now, outside React (e.g. for analytics). */
+export function readCart(): Cart {
+  return cartStore.getSnapshot();
+}
+
+/** How many of this size the cart holds right now (0 if none). */
+function quantityInCart(productSlug: string, variantId: string): number {
+  return (
+    cartStore
+      .getSnapshot()
+      .lines.find((line) => line.productSlug === productSlug && line.variantId === variantId)
+      ?.quantity ?? 0
+  );
+}
 
 /** False during server rendering and hydration, true once the device's cart can be read. */
 export function useHydrated(): boolean {
@@ -127,6 +143,7 @@ export function CartProvider({ children }: CartProviderProps) {
         quantity: plan.adds,
         seenPriceMinor,
       });
+      trackAddToCart(productSlug, variantId, plan.adds);
       emitMascotEvent({ type: "cart-added", quantity: plan.adds });
       if (!saved) emitMascotEvent({ type: "cart-not-saved" });
       return plan.result;
@@ -134,10 +151,16 @@ export function CartProvider({ children }: CartProviderProps) {
     [],
   );
   const setQuantity = useCallback((productSlug: string, variantId: string, quantity: number) => {
+    const before = quantityInCart(productSlug, variantId);
     cartStore.dispatch({ type: "set-quantity", productSlug, variantId, quantity });
+    const change = quantityInCart(productSlug, variantId) - before;
+    if (change > 0) trackAddToCart(productSlug, variantId, change);
+    if (change < 0) trackRemoveFromCart(productSlug, variantId, -change);
   }, []);
   const removeItem = useCallback((productSlug: string, variantId: string) => {
+    const removed = quantityInCart(productSlug, variantId);
     cartStore.dispatch({ type: "remove", productSlug, variantId });
+    trackRemoveFromCart(productSlug, variantId, removed);
   }, []);
   const acceptPrices = useCallback((prices: readonly SeenPrice[]) => {
     cartStore.dispatch({ type: "accept-prices", prices });

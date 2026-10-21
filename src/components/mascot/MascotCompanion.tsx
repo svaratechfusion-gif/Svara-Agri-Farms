@@ -30,6 +30,7 @@ import {
 import { MascotChat } from "./MascotChat";
 import { WhatsAppLink } from "@/components/ui/WhatsAppLink";
 import { generalEnquiry } from "@/lib/contact/whatsapp";
+import { trackMascotWhatsAppClick } from "@/lib/analytics/events";
 
 import { SvaraMascot } from "./SvaraMascot";
 import { useMascotMotion } from "./useMascotMotion";
@@ -443,7 +444,12 @@ export function MascotCompanion() {
             onNavigate={leaveChat}
           />
           <div className="mt-4 border-t border-[color:var(--vein)] pt-3">
-            <WhatsAppLink message={generalEnquiry()}>Chat with our team on WhatsApp</WhatsAppLink>
+            <WhatsAppLink
+              message={generalEnquiry()}
+              onClick={() => trackMascotWhatsAppClick("panel", pathname)}
+            >
+              Chat with our team on WhatsApp
+            </WhatsAppLink>
           </div>
         </div>
       )}

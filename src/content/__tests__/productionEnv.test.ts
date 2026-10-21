@@ -21,8 +21,12 @@ function productionEnv(): Record<string, string> {
 describe("the committed production settings", () => {
   it("name the canonical origin: https, no path, no trailing slash", () => {
     const url = productionEnv().NEXT_PUBLIC_SITE_URL;
-    expect(url).toBe("https://aimhightechnologies.com");
+    expect(url).toBe("https://svaraagrifarms.vercel.app");
     expect(new URL(url).origin).toBe(url);
+  });
+
+  it("send analytics to SVARA's one GA4 property", () => {
+    expect(productionEnv().NEXT_PUBLIC_GA4_ID).toBe("G-7X6NW0X8MJ");
   });
 
   it("hold nothing but public NEXT_PUBLIC_* values", () => {

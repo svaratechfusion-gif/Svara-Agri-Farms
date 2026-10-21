@@ -19,6 +19,7 @@ export default defineConfig({
       include: [
         "src/lib/commerce/**/*.ts",
         "src/lib/contact/*.ts",
+        "src/lib/analytics/*.ts",
         "src/lib/motion/scrollProgress.ts",
         "src/content/field-notes.ts",
         "src/components/ui/leafButtonStyles.ts",

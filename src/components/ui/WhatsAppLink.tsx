@@ -11,6 +11,8 @@ interface WhatsAppLinkProps {
   className?: string;
   /** `light` on dark surfaces (the footer). */
   tone?: "botanical" | "light";
+  /** Called when the link is followed (e.g. to record where it was used). */
+  onClick?: () => void;
 }
 
 /**
@@ -22,6 +24,7 @@ export function WhatsAppLink({
   children,
   className = "",
   tone = "botanical",
+  onClick,
 }: WhatsAppLinkProps) {
   const colour = tone === "light" ? "text-ivory/85 hover:text-ivory" : "text-forest";
   return (
@@ -29,6 +32,7 @@ export function WhatsAppLink({
       href={whatsappUrl(message)}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onClick}
       className={`group inline-flex min-h-11 items-center gap-2 type-small font-medium ${colour} ${className}`}
     >
       <ChatIcon className={tone === "light" ? "shrink-0" : "shrink-0 text-botanical"} />

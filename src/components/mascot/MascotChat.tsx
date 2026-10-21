@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
+import { trackMascotWhatsAppClick } from "@/lib/analytics/events";
+import { WHATSAPP_URL } from "@/lib/contact/whatsapp";
 import { MAX_INPUT_LENGTH, type ChatState } from "@/lib/mascot/chat/conversation";
 import { QUICK_REPLIES, SCRIPT, type ReplyId } from "@/lib/mascot/chat/script";
 
@@ -96,6 +98,11 @@ export function MascotChat({ chat, pathname, onChoose, onSay, onNavigate }: Masc
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={
+                      link.href.startsWith(WHATSAPP_URL)
+                        ? () => trackMascotWhatsAppClick("chat_reply", pathname)
+                        : undefined
+                    }
                     className="mt-2 inline-flex items-center gap-1.5 type-small font-medium text-botanical underline-offset-4 hover:underline"
                   >
                     {link.label} <span aria-hidden="true">↗</span>

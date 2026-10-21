@@ -8,6 +8,7 @@ import { LeafButton } from "@/components/ui/LeafButton";
 import { ArrowIcon, ChatIcon } from "@/components/ui/icons";
 import { leafButtonClasses } from "@/components/ui/leafButtonStyles";
 import { commerceRules } from "@/content/commerce";
+import { trackWhatsAppOrderStarted } from "@/lib/analytics/events";
 import { catalogue } from "@/content/products";
 import { NO_LONGER_AVAILABLE } from "@/lib/commerce/availability";
 import { INDIAN_STATES } from "@/lib/commerce/delivery";
@@ -184,6 +185,8 @@ export function OrderView() {
       return;
     }
     setErrors({});
+    // The order lines only — never the customer's details or the message.
+    trackWhatsAppOrderStarted(resolved.lines);
     // WhatsApp first. Once it is open the order is placed: keep the order as
     // placed for the confirmation, then empty the cart. Replace, so Back from
     // the confirmation never returns to this form.

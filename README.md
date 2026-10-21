@@ -25,7 +25,7 @@ npm run commerce:status # what this environment's commerce is set up to do (no s
 `NEXT_PUBLIC_SITE_URL` is the canonical origin — canonical URLs, Open Graph,
 structured data, the sitemap and robots.txt use it (no trailing slash; paths are
 added without one). Production builds read it from the committed
-`.env.production` (`https://aimhightechnologies.com`); a Vercel environment
+`.env.production` (`https://svaraagrifarms.vercel.app`); a Vercel environment
 variable of the same name overrides it. Without it the site falls back to
 `http://localhost:3000` and robots.txt disallows everything.
 

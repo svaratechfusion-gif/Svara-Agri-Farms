@@ -1,12 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 
+import {
+  GoogleTagManager,
+  GoogleTagManagerNoScript,
+} from "@/components/analytics/GoogleTagManager";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { MascotCompanion } from "@/components/mascot/MascotCompanion";
 import { CartDrawer } from "@/components/commerce/CartDrawer";
 import { CartProvider } from "@/components/commerce/CartProvider";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { site } from "@/content/site";
+import { GA4_ID, GTM_ID } from "@/lib/analytics/config";
 
 import "./globals.css";
 
@@ -51,7 +58,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${playfair.variable} ${jakarta.variable} ${plexMono.variable}`}>
+      {GA4_ID && (
+        <head>
+          <GoogleAnalytics measurementId={GA4_ID} />
+        </head>
+      )}
       <body>
+        {GTM_ID && <GoogleTagManagerNoScript gtmId={GTM_ID} />}
         <a
           href="#main"
           className="fixed top-4 left-4 z-50 -translate-y-24 bg-forest px-5 py-3 type-nav text-ivory focus:translate-y-0"
@@ -67,6 +80,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <CartDrawer />
           <MascotCompanion />
         </CartProvider>
+        <PageViewTracker />
+        {GTM_ID && <GoogleTagManager gtmId={GTM_ID} />}
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import { useId, useState, type ReactNode } from "react";
 
 import { LeafButton } from "@/components/ui/LeafButton";
 import { WhatsAppLink } from "@/components/ui/WhatsAppLink";
+import { trackSelectItem } from "@/lib/analytics/events";
 import { AVAILABILITY_NOTE, sizeAvailability } from "@/lib/commerce/availability";
 import { MAX_QUANTITY_PER_LINE } from "@/lib/commerce/cart";
 import { findVariant, isPurchasable } from "@/lib/commerce/catalog";
@@ -95,6 +96,7 @@ export function PurchaseControls({ product, layout = "full", children }: Purchas
           onChange={(id) => {
             setVariantId(id);
             setMessage("");
+            trackSelectItem(product.slug, id, quantity, full ? "Product page" : "Product range");
           }}
           compact={!full}
         />
